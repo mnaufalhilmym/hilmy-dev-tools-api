@@ -1,0 +1,66 @@
+syntax = "proto3";
+
+package account;
+
+service AccountService {
+    rpc SignUp(SignUpReq) returns (OpRes) {}
+    rpc VerifySignUp(VerifySignUpReq) returns (OpRes) {}
+
+    rpc SignIn(SignInReq) returns (SignInRes) {}
+
+    rpc ChangeEmail(ChangeEmailReq) returns (OpRes) {}
+    rpc ChangePassword(ChangePasswordReq) returns (OpRes) {}
+
+    rpc RequestResetPassword(RequestResetPasswordReq) returns (OpRes) {}
+    rpc VerifyRequestResetPassword(VerifyRequestResetPasswordReq) returns (OpRes) {}
+    rpc ResetPassword(ResetPasswordReq) returns (OpRes) {}
+}
+
+message SignUpReq {
+    string email = 1;
+    string password = 2;
+}
+
+message VerifySignUpReq {
+    string email = 1;
+    string verify_code = 2;
+}
+
+message SignInReq {
+    string email = 1;
+    string password = 2;
+}
+
+message ChangeEmailReq {
+    string token = 1;
+    string new_email = 2;
+}
+
+message ChangePasswordReq {
+    string token = 1;
+    string old_password = 2;
+    string new_password = 3;
+}
+
+message RequestResetPasswordReq {
+    string email = 1;
+}
+
+message VerifyRequestResetPasswordReq {
+    string email = 1;
+    string verify_code = 2;
+}
+
+message ResetPasswordReq {
+    string email = 1;
+    string verify_code = 2;
+    string new_password = 3;
+}
+
+message SignInRes {
+    string token = 1;
+}
+
+message OpRes {
+    bool is_success = 1;
+}
