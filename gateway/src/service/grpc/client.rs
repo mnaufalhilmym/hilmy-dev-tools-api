@@ -2,7 +2,7 @@ use std::{error::Error, time::Duration};
 
 use diesel::{ExpressionMethods, QueryDsl, RunQueryDsl};
 use tonic::transport::Channel;
-use tools_db::pg::connection::DbPooled;
+use tools_lib_db::pg::connection::DbPooled;
 use uuid::Uuid;
 
 use crate::{

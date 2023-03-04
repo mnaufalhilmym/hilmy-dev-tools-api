@@ -22,4 +22,12 @@ impl Env {
     pub fn database_url() -> String {
         env::var("DATABASE_URL").unwrap()
     }
+
+    pub fn redis_url() -> String {
+        env::var("REDIS_URL").unwrap()
+    }
+
+    pub fn hash_secret() -> String {
+        env::var("HASH_SECRET").unwrap()
+    }
 }

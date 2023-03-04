@@ -1,6 +1,15 @@
-use tonic::{Request, Response, Result};
+use argon2::PasswordHasher;
+use diesel::{ExpressionMethods, QueryDsl, RunQueryDsl};
+use rand::Rng;
+use redis::Commands;
+use serde_json::json;
+use tonic::{Request, Response, Result, Status};
 
-use crate::proto::{self, account::AccountService};
+use crate::{
+    helper, model,
+    proto::{self, account::AccountService},
+    schema,
+};
 
 use super::AccountController;
 
@@ -10,7 +19,49 @@ impl AccountService for AccountController {
         &self,
         req: Request<proto::account::SignUpReq>,
     ) -> Result<Response<proto::account::OpRes>> {
-        println!("{req:?}");
+        let db_conn =
+            &mut tools_lib_db::pg::connection::get_connection(&self.app_mode, &self.db_pool)
+                .map_err(|e| Status::internal(e.to_string()))?;
+        let redis_conn =
+            &mut tools_lib_db::redis::connection::get_connection(&self.app_mode, &self.redis_pool)
+                .map_err(|e| Status::internal(e.to_string()))?;
+        let (argon2, salt) = helper::argon2::new(self.hash_secret.as_bytes());
+
+        if schema::account::table
+            .filter(schema::account::email.eq(&req.get_ref().email))
+            .first::<model::Account>(db_conn)
+            .is_ok()
+        {
+            return Err(Status::new(
+                tonic::Code::Aborted,
+                "The email has been registered.",
+            ));
+        }
+
+        let hashed_password = argon2
+            .hash_password(req.get_ref().password.as_bytes(), &salt)
+            .unwrap()
+            .to_string();
+
+        let verification_code = rand::thread_rng().gen_range(100000..=999999).to_string();
+
+        let data = json!({
+            "email": &req.get_ref().email,
+            "password": &hashed_password,
+            "verify_code": &verification_code,
+        })
+        .to_string();
+
+        redis_conn
+            .set_ex(
+                format!("sign_up-{}", &req.get_ref().email),
+                data,
+                1 * 60 * 60,
+            )
+            .map_err(|e| Status::aborted(e.to_string()))?;
+
+        // TODO: Send mail
+
         Ok(Response::new(proto::account::OpRes { is_success: true }))
     }
 

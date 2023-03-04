@@ -1,7 +1,7 @@
 use async_graphql::{Context, Object, Result};
 use tonic::Request;
 use tools_account::proto::{self, account::AccountServiceClient};
-use tools_db::pg::connection::DbPool;
+use tools_lib_db::pg::connection::DbPool;
 
 use crate::{env::AppMode, service};
 
@@ -28,7 +28,7 @@ impl AccountMutation {
         password: String,
     ) -> Result<OpResult> {
         let app_mode = ctx.data_unchecked::<AppMode>();
-        let db_conn = &mut tools_db::pg::connection::get_connection(
+        let db_conn = &mut tools_lib_db::pg::connection::get_connection(
             &app_mode,
             &ctx.data_unchecked::<DbPool>(),
         )?;

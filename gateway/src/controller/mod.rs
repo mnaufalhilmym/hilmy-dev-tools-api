@@ -2,7 +2,7 @@ use actix_web::{web, HttpResponse, Result};
 use actix_web_httpauth::extractors::bearer::BearerAuth;
 use async_graphql::{http::GraphiQLSource, EmptySubscription, Schema};
 use async_graphql_actix_web::{GraphQLRequest, GraphQLResponse};
-use tools_db::pg::connection::DbPool;
+use tools_lib_db::pg::connection::DbPool;
 
 use crate::{
     contract::Token,
@@ -49,7 +49,7 @@ async fn graphiql_v1() -> Result<HttpResponse> {
 
 pub struct CtxData {
     pub app_mode: AppMode,
-    pub db_conn_pool: DbPool,
+    pub db_pool: DbPool,
 }
 
 pub fn register(cfg: &mut web::ServiceConfig, data: CtxData) {
@@ -67,7 +67,7 @@ pub fn register(cfg: &mut web::ServiceConfig, data: CtxData) {
                         EmptySubscription,
                     )
                     .data(data.app_mode)
-                    .data(data.db_conn_pool)
+                    .data(data.db_pool)
                     .finish(),
                 ))
                 .route("", web::post().to(graphql_v1)),

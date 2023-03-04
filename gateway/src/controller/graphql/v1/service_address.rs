@@ -1,7 +1,7 @@
 use async_graphql::{Context, Object, Result};
 use chrono::NaiveDateTime;
 use diesel::{ExpressionMethods, QueryDsl, RunQueryDsl};
-use tools_db::pg::connection::DbPool;
+use tools_lib_db::pg::connection::DbPool;
 use uuid::Uuid;
 
 use crate::{controller::graphql::generic_schema::OpRes, env::AppMode, model, schema, service};
@@ -58,7 +58,7 @@ impl ServiceAddressQuery {
         id: Option<Uuid>,
         service_id: Option<Uuid>,
     ) -> Result<Vec<ServiceAddress>> {
-        let db_conn = &mut tools_db::pg::connection::get_connection(
+        let db_conn = &mut tools_lib_db::pg::connection::get_connection(
             ctx.data_unchecked::<AppMode>(),
             ctx.data_unchecked::<DbPool>(),
         )?;
@@ -97,7 +97,7 @@ impl ServiceAddressMutation {
         service_id: Uuid,
         address: String,
     ) -> Result<ServiceAddress> {
-        let db_conn = &mut tools_db::pg::connection::get_connection(
+        let db_conn = &mut tools_lib_db::pg::connection::get_connection(
             ctx.data_unchecked::<AppMode>(),
             ctx.data_unchecked::<DbPool>(),
         )?;
@@ -130,7 +130,7 @@ impl ServiceAddressMutation {
         address: Option<String>,
         status: Option<model::ServiceAddressStatus>,
     ) -> Result<ServiceAddress> {
-        let db_conn = &mut tools_db::pg::connection::get_connection(
+        let db_conn = &mut tools_lib_db::pg::connection::get_connection(
             ctx.data_unchecked::<AppMode>(),
             ctx.data_unchecked::<DbPool>(),
         )?;
@@ -180,7 +180,7 @@ impl ServiceAddressMutation {
     }
 
     async fn delete_service_address<'a>(&self, ctx: &Context<'a>, id: Uuid) -> Result<OpRes> {
-        let db_conn = &mut tools_db::pg::connection::get_connection(
+        let db_conn = &mut tools_lib_db::pg::connection::get_connection(
             ctx.data_unchecked::<AppMode>(),
             ctx.data_unchecked::<DbPool>(),
         )?;

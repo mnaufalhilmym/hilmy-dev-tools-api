@@ -1,5 +1,5 @@
 [package]
-name = "tools-db"
+name = "tools-lib-db"
 version = "0.1.0"
 edition = "2021"
 
@@ -8,3 +8,4 @@ edition = "2021"
 [dependencies]
 diesel = { version = "2", features = ["postgres", "r2d2", "uuid", "chrono"] }
 diesel_migrations = "2"
+redis = { version = "0.22", features = ["r2d2", "ahash"] }

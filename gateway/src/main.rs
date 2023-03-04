@@ -23,9 +23,9 @@ async fn main() -> Result<()> {
     let service_addrs = env::Env::service_addrs();
     let database_url = env::Env::database_url();
 
-    let db_conn_pool = tools_db::pg::connection::create_connection_pool(&database_url);
-    let db_conn = &mut tools_db::pg::connection::get_connection(&app_mode, &db_conn_pool).unwrap();
-    if let Err(e) = tools_db::pg::migration::run_migrations(db_conn, MIGRATIONS) {
+    let db_pool = tools_lib_db::pg::connection::create_connection_pool(&database_url);
+    let db_conn = &mut tools_lib_db::pg::connection::get_connection(&app_mode, &db_pool).unwrap();
+    if let Err(e) = tools_lib_db::pg::migration::run_migrations(db_conn, MIGRATIONS) {
         eprintln!("Error running migrations: {e}");
         return Err(Error::new(ErrorKind::Other, e));
     };
@@ -47,7 +47,7 @@ async fn main() -> Result<()> {
                     service_config,
                     CtxData {
                         app_mode: AppMode::from(app_mode.to_owned()),
-                        db_conn_pool: db_conn_pool.to_owned(),
+                        db_pool: db_pool.to_owned(),
                     },
                 )
             })

@@ -9,9 +9,16 @@ edition = "2021"
 tonic = "0.8"
 prost = "0.11"
 tokio = { version = "1", features = ["rt-multi-thread"] }
+diesel = { version = "2", features = ["postgres", "r2d2", "uuid", "chrono"] }
 diesel_migrations = "2"
+argon2 = "0.4"
+uuid = { version = "1", features = ["v4", "fast-rng", "macro-diagnostics"] }
+chrono = "0.4"
+rand = "0.8"
+serde_json = "1"
+redis = "0.22"
 
-tools-db = { path = "../lib/db" }
+tools-lib-db = { path = "../lib/db" }
 
 [build-dependencies]
 tonic-build = "0.8"
