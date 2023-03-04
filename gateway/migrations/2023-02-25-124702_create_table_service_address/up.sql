@@ -10,5 +10,5 @@ CREATE TABLE IF NOT EXISTS "service_address" (
     "created_at" TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
     "updated_at" TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
     PRIMARY KEY ("id"),
-    CONSTRAINT "fk_service_info" FOREIGN KEY ("service_id") REFERENCES "service_info" ("id")
+    CONSTRAINT "fk_service_info" FOREIGN KEY ("service_id") REFERENCES "service_info" ("id") ON DELETE CASCADE
 );

@@ -12,8 +12,7 @@ use crate::{
 
 pub async fn connect(service_address: &str) -> Result<Channel, Box<dyn Error + Send + Sync>> {
     match Channel::from_shared(service_address.to_owned())?
-        .timeout(Duration::from_secs(5))
-        .connect_timeout(Duration::from_secs(5))
+        .connect_timeout(Duration::from_millis(500))
         .connect()
         .await
     {
@@ -27,11 +26,11 @@ pub async fn get(
     service_name: &str,
 ) -> Result<Channel, Box<dyn Error + Send + Sync>> {
     let service_info = schema::service_info::table
-        .filter(schema::service_info::name.eq(service_name))
+        .filter(schema::service_info::name.eq(&service_name))
         .first::<model::ServiceInfo>(db_conn)?;
     let service_addresses = schema::service_address::table
-        .filter(schema::service_address::status.eq(model::ServiceAddressStatus::Accessible))
-        .filter(schema::service_address::service_id.eq(service_info.id))
+        .filter(schema::service_address::status.eq(&model::ServiceAddressStatus::Accessible))
+        .filter(schema::service_address::service_id.eq(&service_info.id))
         .order(schema::service_address::address.asc())
         .load::<model::ServiceAddress>(db_conn)?;
 
