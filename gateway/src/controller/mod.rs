@@ -12,7 +12,6 @@ use crate::{
 use self::graphql::v1::{MutationRootV1, QueryRootV1};
 
 mod graphql;
-mod grpc;
 
 async fn root() -> Result<HttpResponse> {
     let app_name = &env::Env::app_name();

@@ -1,2 +1,2 @@
 [workspace]
-members = ["gateway", "account"]
+members = ["gateway", "account", "mailer"]

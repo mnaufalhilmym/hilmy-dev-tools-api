@@ -26,10 +26,7 @@ async fn main() -> Result<(), Box<dyn Error + Send + Sync>> {
 
     let db_pool = tools_lib_db::pg::connection::create_connection_pool(&database_url);
     let db_conn = &mut tools_lib_db::pg::connection::get_connection(&app_mode, &db_pool).unwrap();
-    if let Err(e) = tools_lib_db::pg::migration::run_migrations(db_conn, MIGRATIONS) {
-        eprintln!("Error running migrations: {e}");
-        return Err(e.into());
-    };
+    tools_lib_db::pg::migration::run_migrations(db_conn, MIGRATIONS)?;
 
     let redis_pool = tools_lib_db::redis::connection::create_connection_pool(&redis_url);
 

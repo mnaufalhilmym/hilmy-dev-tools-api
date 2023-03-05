@@ -68,5 +68,5 @@ pub async fn get(
         return Ok(channel);
     }
 
-    Err(format!("Can't get client.").into())
+    Err(format!("Can't get the client.").into())
 }

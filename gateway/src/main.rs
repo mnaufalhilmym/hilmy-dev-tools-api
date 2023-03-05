@@ -1,8 +1,9 @@
+use std::io::{Error, ErrorKind, Result};
+
 use actix_cors::Cors;
 use actix_web::{middleware::Logger, web::ServiceConfig, App, HttpServer};
 use controller::register;
 use diesel_migrations::{embed_migrations, EmbeddedMigrations};
-use std::io::{Error, ErrorKind, Result};
 
 use crate::{controller::CtxData, env::AppMode};
 
