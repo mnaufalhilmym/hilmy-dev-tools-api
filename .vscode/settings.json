@@ -2,11 +2,15 @@
     "terminal.integrated.env.linux": {
         "OPENSSL_DIR": "/run/media/hilmy/2de4c9c1-c1b4-430c-8e93-2bbd5c01f88e/labs/splashmodic/tools/tools-backend/dependencies/openssl/usr/",
         "PROTOC": "/run/media/hilmy/2de4c9c1-c1b4-430c-8e93-2bbd5c01f88e/labs/splashmodic/tools/tools-backend/dependencies/protoc/bin/protoc",
-        "CARGO_TARGET_DIR": "/run/media/hilmy/2de4c9c1-c1b4-430c-8e93-2bbd5c01f88e/.cache/labs/splashmodic/tools/tools-backend"
+        "CXX": "/run/media/hilmy/2de4c9c1-c1b4-430c-8e93-2bbd5c01f88e/labs/dependencies/gcc-c++/12.2.1-2.fc37.x86_64/usr/bin/c++",
+        "C_INCLUDE_PATH": "/usr/lib/gcc/x86_64-redhat-linux/12/include/",
+        "CPLUS_INCLUDE_PATH": "/usr/lib/gcc/x86_64-redhat-linux/12/include/"
     },
     "rust-analyzer.cargo.extraEnv": {
         "OPENSSL_DIR": "/run/media/hilmy/2de4c9c1-c1b4-430c-8e93-2bbd5c01f88e/labs/splashmodic/tools/tools-backend/dependencies/openssl/usr/",
         "PROTOC": "/run/media/hilmy/2de4c9c1-c1b4-430c-8e93-2bbd5c01f88e/labs/splashmodic/tools/tools-backend/dependencies/protoc/bin/protoc",
-        "CARGO_TARGET_DIR": "/run/media/hilmy/2de4c9c1-c1b4-430c-8e93-2bbd5c01f88e/.cache/labs/splashmodic/tools/tools-backend"
+        "CXX": "/run/media/hilmy/2de4c9c1-c1b4-430c-8e93-2bbd5c01f88e/labs/dependencies/gcc-c++/12.2.1-2.fc37.x86_64/usr/bin/c++",
+        "C_INCLUDE_PATH": "/usr/lib/gcc/x86_64-redhat-linux/12/include/",
+        "CPLUS_INCLUDE_PATH": "/usr/lib/gcc/x86_64-redhat-linux/12/include/"
     }
 }

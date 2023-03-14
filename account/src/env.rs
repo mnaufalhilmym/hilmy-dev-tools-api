@@ -30,4 +30,8 @@ impl Env {
     pub fn hash_secret() -> String {
         env::var("HASH_SECRET").unwrap()
     }
+
+    pub fn kafka_addrs() -> String {
+        env::var("KAFKA_ADDRS").unwrap()
+    }
 }
