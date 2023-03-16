@@ -26,7 +26,6 @@ async fn mailer(
         .set("bootstrap.servers", &brokers)
         .set("session.timeout.ms", "6000")
         .set("enable.auto.commit", "false")
-        .set("cleanup.policy", "compact")
         .create()?;
 
     consumer.subscribe(&[&input_topic])?;

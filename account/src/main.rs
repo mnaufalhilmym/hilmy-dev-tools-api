@@ -35,7 +35,6 @@ async fn main() -> Result<(), Box<dyn Error + Send + Sync>> {
     let kafka_producer = ClientConfig::new()
         .set("bootstrap.servers", &kafka_addrs)
         .set("message.timeout.ms", "6000")
-        .set("cleanup.policy", "compact")
         .create()?;
 
     println!("{app_name} {service_name} is running on {service_addrs} in {app_mode}.");
