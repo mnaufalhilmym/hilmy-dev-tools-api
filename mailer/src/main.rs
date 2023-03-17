@@ -33,16 +33,18 @@ async fn mailer(
     loop {
         match consumer.recv().await {
             Ok(message) => {
-                let payload = message.payload_view::<str>();
-                if let Some(payload) = payload {
-                    if let Ok(payload) = payload {
-                        let payload: MailReq = serde_json::from_str(payload)?;
-                        let message = message_builder
-                            .to_owned()
-                            .to(payload.to.parse()?)
-                            .subject(payload.subject)
-                            .body(payload.body)?;
-                        smtp_transport.send(&message)?;
+                let payloads = message.payload_view::<str>();
+                if let Some(payloads) = payloads {
+                    if let Ok(payloads) = payloads {
+                        let payloads: Vec<MailReq> = serde_json::from_str(payloads)?;
+                        for payload in payloads {
+                            let message = message_builder
+                                .to_owned()
+                                .to(payload.to.parse()?)
+                                .subject(payload.subject)
+                                .body(payload.body)?;
+                            smtp_transport.send(&message)?;
+                        }
                     }
                 }
                 if let Err(e) = consumer.commit_message(&message, CommitMode::Async) {

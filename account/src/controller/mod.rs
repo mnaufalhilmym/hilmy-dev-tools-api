@@ -7,6 +7,7 @@ pub struct AccountController {
     pub app_mode: String,
     pub db_pool: DbPool,
     pub redis_pool: RedisPool,
-    pub hash_secret: String,
+    pub argon2_hash_secret: String,
+    pub jwt_secret: String,
     pub kafka_producer: FutureProducer,
 }

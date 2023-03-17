@@ -9,6 +9,7 @@ service AccountService {
     rpc SignIn(SignInReq) returns (SignInRes) {}
 
     rpc ChangeEmail(ChangeEmailReq) returns (OpRes) {}
+    rpc VerifyChangeEmail(VerifyChangeEmailReq) returns (OpRes) {}
     rpc ChangePassword(ChangePasswordReq) returns (OpRes) {}
 
     rpc RequestResetPassword(RequestResetPasswordReq) returns (OpRes) {}
@@ -34,6 +35,11 @@ message SignInReq {
 message ChangeEmailReq {
     string token = 1;
     string new_email = 2;
+}
+
+message VerifyChangeEmailReq {
+    string new_email = 1;
+    string verify_code = 2;
 }
 
 message ChangePasswordReq {

@@ -7,6 +7,7 @@ use tonic::transport::Server;
 use crate::controller::AccountController;
 
 mod controller;
+mod dto;
 mod env;
 mod helper;
 mod model;
@@ -23,7 +24,8 @@ async fn main() -> Result<(), Box<dyn Error + Send + Sync>> {
     let service_addrs = env::Env::service_addrs();
     let database_url = env::Env::database_url();
     let redis_url = env::Env::redis_url();
-    let hash_secret = env::Env::hash_secret();
+    let argon2_hash_secret = env::Env::argon2_hash_secret();
+    let jwt_secret = env::Env::jwt_secret();
     let kafka_addrs = env::Env::kafka_addrs();
 
     let db_pool = tools_lib_db::pg::connection::create_connection_pool(&database_url);
@@ -45,7 +47,8 @@ async fn main() -> Result<(), Box<dyn Error + Send + Sync>> {
                 app_mode,
                 db_pool,
                 redis_pool,
-                hash_secret,
+                argon2_hash_secret,
+                jwt_secret,
                 kafka_producer,
             },
         ))

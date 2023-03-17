@@ -27,8 +27,12 @@ impl Env {
         env::var("REDIS_URL").unwrap()
     }
 
-    pub fn hash_secret() -> String {
-        env::var("HASH_SECRET").unwrap()
+    pub fn argon2_hash_secret() -> String {
+        env::var("ARGON2_HASH_SECRET").unwrap()
+    }
+
+    pub fn jwt_secret() -> String {
+        env::var("JWT_SECRET").unwrap()
     }
 
     pub fn kafka_addrs() -> String {

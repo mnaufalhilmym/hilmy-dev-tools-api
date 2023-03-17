@@ -9,6 +9,7 @@ use crate::{controller::CtxData, env::AppMode};
 
 mod contract;
 mod controller;
+mod dto;
 mod env;
 mod model;
 mod schema;

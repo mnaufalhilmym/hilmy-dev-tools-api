@@ -5,7 +5,7 @@ use async_graphql_actix_web::{GraphQLRequest, GraphQLResponse};
 use tools_lib_db::pg::connection::DbPool;
 
 use crate::{
-    contract::Token,
+    dto::token::Token,
     env::{self, AppMode},
 };
 
