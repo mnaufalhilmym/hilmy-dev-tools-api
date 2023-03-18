@@ -73,18 +73,21 @@ impl AccountService for AccountController {
             .map_err(|e| Status::aborted(e.to_string()))?;
 
         // Send to mailer service
-        if let Err(e) = kafka_producer.send_result(
-            FutureRecord::to("mailer").key(&data_key).payload(
-                &serde_json::to_string(&[&tools_mailer::contract::MailReq {
-                    to: req.get_ref().email.to_owned(),
-                    subject: format!("Sign Up Verification Code - {verification_code}"),
-                    body: format!("Your sign up verification code is {verification_code}"),
-                }])
-                .map_err(|e| Status::aborted(e.to_string()))?,
-            ),
-        ) {
-            eprintln!("Error send to Kafka: {e:?}");
-        }
+        kafka_producer
+            .send_result(
+                FutureRecord::to("mailer").key(&data_key).payload(
+                    &serde_json::to_string(&[&tools_mailer::contract::MailReq {
+                        to: req.get_ref().email.to_owned(),
+                        subject: format!("Sign Up Verification Code - {verification_code}"),
+                        body: format!("Your sign up verification code is {verification_code}"),
+                    }])
+                    .map_err(|e| Status::aborted(e.to_string()))?,
+                ),
+            )
+            .map_err(|e| Status::aborted(e.0.to_string()))?
+            .await
+            .map_err(|e| Status::aborted(e.to_string()))?
+            .map_err(|e| Status::aborted(e.0.to_string()))?;
 
         Ok(Response::new(proto::account::OpRes { is_success: true }))
     }
@@ -131,18 +134,21 @@ impl AccountService for AccountController {
             .map_err(|e| Status::internal(e.to_string()))?;
 
         // Send to mailer service
-        if let Err(e) = kafka_producer.send_result(
-            FutureRecord::to("mailer").key(&data_key).payload(
-                &serde_json::to_string(&[&tools_mailer::contract::MailReq {
-                    to: req.get_ref().email.to_owned(),
-                    subject: "Sign Up Verification Complete".to_string(),
-                    body: "Your account is now verified.".to_string(),
-                }])
-                .map_err(|e| Status::aborted(e.to_string()))?,
-            ),
-        ) {
-            eprintln!("Error send to Kafka: {e:?}");
-        }
+        kafka_producer
+            .send_result(
+                FutureRecord::to("mailer").key(&data_key).payload(
+                    &serde_json::to_string(&[&tools_mailer::contract::MailReq {
+                        to: req.get_ref().email.to_owned(),
+                        subject: "Sign Up Verification Complete".to_string(),
+                        body: "Your account is now verified.".to_string(),
+                    }])
+                    .map_err(|e| Status::aborted(e.to_string()))?,
+                ),
+            )
+            .map_err(|e| Status::aborted(e.0.to_string()))?
+            .await
+            .map_err(|e| Status::aborted(e.to_string()))?
+            .map_err(|e| Status::aborted(e.0.to_string()))?;
 
         Ok(Response::new(proto::account::OpRes { is_success: true }))
     }
@@ -239,18 +245,21 @@ impl AccountService for AccountController {
             .map_err(|e| Status::aborted(e.to_string()))?;
 
         // Send to mailer service
-        if let Err(e) = kafka_producer.send_result(
-            FutureRecord::to("mailer").key(&data_key).payload(
-                &serde_json::to_string(&[&tools_mailer::contract::MailReq {
-                    to: req.get_ref().new_email.to_owned(),
-                    subject: format!("Change Email Verification Code - {verification_code}"),
-                    body: format!("Your change email verification code is {verification_code}"),
-                }])
-                .map_err(|e| Status::aborted(e.to_string()))?,
-            ),
-        ) {
-            eprintln!("Error send to Kafka: {e:?}");
-        }
+        kafka_producer
+            .send_result(
+                FutureRecord::to("mailer").key(&data_key).payload(
+                    &serde_json::to_string(&[&tools_mailer::contract::MailReq {
+                        to: req.get_ref().new_email.to_owned(),
+                        subject: format!("Change Email Verification Code - {verification_code}"),
+                        body: format!("Your change email verification code is {verification_code}"),
+                    }])
+                    .map_err(|e| Status::aborted(e.to_string()))?,
+                ),
+            )
+            .map_err(|e| Status::aborted(e.0.to_string()))?
+            .await
+            .map_err(|e| Status::aborted(e.to_string()))?
+            .map_err(|e| Status::aborted(e.0.to_string()))?;
 
         Ok(Response::new(proto::account::OpRes { is_success: true }))
     }
@@ -300,31 +309,34 @@ impl AccountService for AccountController {
         .map_err(|e| Status::internal(e.to_string()))?;
 
         // Send email notification change email
-        if let Err(e) = kafka_producer.send_result(
-            FutureRecord::to("mailer").key(&data_key).payload(
-                &serde_json::to_string(&[
-                    &tools_mailer::contract::MailReq {
-                        to: account_change_email.old_email.to_owned(),
-                        subject: "Change Email Verification Complete".to_string(),
-                        body: format!(
-                            "Your account email is now changed to {}.",
-                            &account_change_email.new_email
-                        ),
-                    },
-                    &tools_mailer::contract::MailReq {
-                        to: account_change_email.new_email.to_owned(),
-                        subject: "Change Email Verification Complete".to_string(),
-                        body: format!(
-                            "Your account email is now changed to {}.",
-                            &account_change_email.new_email
-                        ),
-                    },
-                ])
-                .map_err(|e| Status::aborted(e.to_string()))?,
-            ),
-        ) {
-            eprintln!("Error send to Kafka: {e:?}");
-        }
+        kafka_producer
+            .send_result(
+                FutureRecord::to("mailer").key(&data_key).payload(
+                    &serde_json::to_string(&[
+                        &tools_mailer::contract::MailReq {
+                            to: account_change_email.old_email.to_owned(),
+                            subject: "Change Email Verification Complete".to_string(),
+                            body: format!(
+                                "Your account email is now changed to {}.",
+                                &account_change_email.new_email
+                            ),
+                        },
+                        &tools_mailer::contract::MailReq {
+                            to: account_change_email.new_email.to_owned(),
+                            subject: "Change Email Verification Complete".to_string(),
+                            body: format!(
+                                "Your account email is now changed to {}.",
+                                &account_change_email.new_email
+                            ),
+                        },
+                    ])
+                    .map_err(|e| Status::aborted(e.to_string()))?,
+                ),
+            )
+            .map_err(|e| Status::aborted(e.0.to_string()))?
+            .await
+            .map_err(|e| Status::aborted(e.to_string()))?
+            .map_err(|e| Status::aborted(e.0.to_string()))?;
 
         Ok(Response::new(proto::account::OpRes { is_success: true }))
     }
@@ -383,20 +395,23 @@ impl AccountService for AccountController {
             .map_err(|e| Status::internal(e.to_string()))?;
 
         // Send email notification change email
-        if let Err(e) = kafka_producer.send_result(
-            FutureRecord::to("mailer")
-                .key(&format!("change_password-{}", &account_data.email))
-                .payload(
-                    &serde_json::to_string(&[&tools_mailer::contract::MailReq {
-                        to: account_data.email.to_owned(),
-                        subject: "Change Password Success".to_string(),
-                        body: "Your account password is now changed".to_string(),
-                    }])
-                    .map_err(|e| Status::aborted(e.to_string()))?,
-                ),
-        ) {
-            eprintln!("Error send to Kafka: {e:?}");
-        }
+        kafka_producer
+            .send_result(
+                FutureRecord::to("mailer")
+                    .key(&format!("change_password-{}", &account_data.email))
+                    .payload(
+                        &serde_json::to_string(&[&tools_mailer::contract::MailReq {
+                            to: account_data.email.to_owned(),
+                            subject: "Change Password Success".to_string(),
+                            body: "Your account password is now changed".to_string(),
+                        }])
+                        .map_err(|e| Status::aborted(e.to_string()))?,
+                    ),
+            )
+            .map_err(|e| Status::aborted(e.0.to_string()))?
+            .await
+            .map_err(|e| Status::aborted(e.to_string()))?
+            .map_err(|e| Status::aborted(e.0.to_string()))?;
 
         Ok(Response::new(proto::account::OpRes { is_success: true }))
     }
@@ -428,18 +443,23 @@ impl AccountService for AccountController {
             .map_err(|e| Status::aborted(e.to_string()))?;
 
         // Send to mailer service
-        if let Err(e) = kafka_producer.send_result(
-            FutureRecord::to("mailer").key(&data_key).payload(
-                &serde_json::to_string(&[&tools_mailer::contract::MailReq {
-                    to: req.get_ref().email.to_owned(),
-                    subject: format!("Reset Password Verification Code - {verification_code}"),
-                    body: format!("Your reset password verification code is {verification_code}"),
-                }])
-                .map_err(|e| Status::aborted(e.to_string()))?,
-            ),
-        ) {
-            eprintln!("Error send to Kafka: {e:?}");
-        }
+        kafka_producer
+            .send_result(
+                FutureRecord::to("mailer").key(&data_key).payload(
+                    &serde_json::to_string(&[&tools_mailer::contract::MailReq {
+                        to: req.get_ref().email.to_owned(),
+                        subject: format!("Reset Password Verification Code - {verification_code}"),
+                        body: format!(
+                            "Your reset password verification code is {verification_code}"
+                        ),
+                    }])
+                    .map_err(|e| Status::aborted(e.to_string()))?,
+                ),
+            )
+            .map_err(|e| Status::aborted(e.0.to_string()))?
+            .await
+            .map_err(|e| Status::aborted(e.to_string()))?
+            .map_err(|e| Status::aborted(e.0.to_string()))?;
 
         Ok(Response::new(proto::account::OpRes { is_success: true }))
     }
@@ -524,18 +544,21 @@ impl AccountService for AccountController {
         .map_err(|e| Status::internal(e.to_string()))?;
 
         // Send email notification change email
-        if let Err(e) = kafka_producer.send_result(
-            FutureRecord::to("mailer").key(&data_key).payload(
-                &serde_json::to_string(&[&tools_mailer::contract::MailReq {
-                    to: req.get_ref().email.to_owned(),
-                    subject: "Reset Password Success".to_string(),
-                    body: "Your account password is now changed".to_string(),
-                }])
-                .map_err(|e| Status::aborted(e.to_string()))?,
-            ),
-        ) {
-            eprintln!("Error send to Kafka: {e:?}");
-        }
+        kafka_producer
+            .send_result(
+                FutureRecord::to("mailer").key(&data_key).payload(
+                    &serde_json::to_string(&[&tools_mailer::contract::MailReq {
+                        to: req.get_ref().email.to_owned(),
+                        subject: "Reset Password Success".to_string(),
+                        body: "Your account password is now changed".to_string(),
+                    }])
+                    .map_err(|e| Status::aborted(e.to_string()))?,
+                ),
+            )
+            .map_err(|e| Status::aborted(e.0.to_string()))?
+            .await
+            .map_err(|e| Status::aborted(e.to_string()))?
+            .map_err(|e| Status::aborted(e.0.to_string()))?;
 
         Ok(Response::new(proto::account::OpRes { is_success: true }))
     }
