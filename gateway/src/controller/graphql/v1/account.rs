@@ -1,14 +1,50 @@
+use std::str::FromStr;
+
 use async_graphql::{Context, Object, Result};
 use tonic::Request;
 use tools_account::proto::{self, account::AccountServiceClient};
 use tools_lib_db::pg::connection::DbPool;
+use uuid::Uuid;
 
 use crate::{
-    contract::graphql::{op_result::OpResult, sign_in_result::SignInResult},
+    contract::graphql::{account::Account, op_result::OpResult, sign_in_result::SignInResult},
     dto::token::Token,
     env::AppMode,
     service,
 };
+
+#[derive(Default)]
+pub struct AccountQuery;
+
+#[Object]
+impl AccountQuery {
+    async fn account<'a>(&self, ctx: &Context<'a>) -> Result<Account> {
+        let app_mode = ctx.data_unchecked::<AppMode>();
+        let db_conn = &mut tools_lib_db::pg::connection::get_connection(
+            &app_mode,
+            &ctx.data_unchecked::<DbPool>(),
+        )?;
+        let token = ctx
+            .data_opt::<Token>()
+            .ok_or("Token doesn't exist")?
+            .0
+            .to_owned();
+
+        let mut client =
+            AccountServiceClient::new(service::grpc::client::get(db_conn, "account").await?);
+
+        let res = client
+            .get_account(Request::new(proto::account::GetAccountReq { token }))
+            .await?;
+
+        Ok(Account {
+            id: Uuid::from_str(&res.get_ref().id)?,
+            email: res.get_ref().email.to_owned(),
+            created_at: res.get_ref().created_at.to_owned(),
+            updated_at: res.get_ref().updated_at.to_owned(),
+        })
+    }
+}
 
 #[derive(Default)]
 pub struct AccountMutation;
@@ -250,6 +286,30 @@ impl AccountMutation {
                 verify_code,
                 new_password,
             }))
+            .await?;
+
+        Ok(OpResult {
+            is_success: res.get_ref().is_success,
+        })
+    }
+
+    async fn delete_account<'a>(&self, ctx: &Context<'a>) -> Result<OpResult> {
+        let app_mode = ctx.data_unchecked::<AppMode>();
+        let db_conn = &mut tools_lib_db::pg::connection::get_connection(
+            &app_mode,
+            &ctx.data_unchecked::<DbPool>(),
+        )?;
+        let token = ctx
+            .data_opt::<Token>()
+            .ok_or("Token doesn't exist")?
+            .0
+            .to_owned();
+
+        let mut client =
+            AccountServiceClient::new(service::grpc::client::get(db_conn, "account").await?);
+
+        let res = client
+            .delete_account(Request::new(proto::account::DeleteAccountReq { token }))
             .await?;
 
         Ok(OpResult {

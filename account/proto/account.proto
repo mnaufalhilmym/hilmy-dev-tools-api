@@ -2,6 +2,8 @@ syntax = "proto3";
 
 package account;
 
+import "google/protobuf/timestamp.proto";
+
 service AccountService {
     rpc SignUp(SignUpReq) returns (OpRes) {}
     rpc VerifySignUp(VerifySignUpReq) returns (OpRes) {}
@@ -15,6 +17,9 @@ service AccountService {
     rpc RequestResetPassword(RequestResetPasswordReq) returns (OpRes) {}
     rpc VerifyRequestResetPassword(VerifyRequestResetPasswordReq) returns (OpRes) {}
     rpc ResetPassword(ResetPasswordReq) returns (OpRes) {}
+
+    rpc GetAccount(GetAccountReq) returns (GetAccountRes) {}
+    rpc DeleteAccount(DeleteAccountReq) returns (OpRes) {}
 }
 
 message SignUpReq {
@@ -63,10 +68,25 @@ message ResetPasswordReq {
     string new_password = 3;
 }
 
+message GetAccountReq {
+    string token = 1;
+}
+
+message DeleteAccountReq {
+    string token = 1;
+}
+
 message SignInRes {
     string token = 1;
 }
 
 message OpRes {
     bool is_success = 1;
+}
+
+message GetAccountRes {
+    string id = 1;
+    string email = 2;
+    string created_at = 3;
+    string updated_at = 4;
 }

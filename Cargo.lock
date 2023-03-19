@@ -2633,6 +2633,7 @@ dependencies = [
  "diesel_migrations",
  "jsonwebtoken",
  "prost",
+ "prost-types",
  "rand",
  "rdkafka",
  "redis",

@@ -41,10 +41,7 @@ impl AccountService for AccountController {
             .first::<model::Account>(db_conn)
             .is_ok()
         {
-            return Err(Status::new(
-                tonic::Code::Aborted,
-                "The email has been registered.",
-            ));
+            return Err(Status::aborted("The email has been registered."));
         }
 
         // Hash the password for security
@@ -65,12 +62,12 @@ impl AccountService for AccountController {
             password: hashed_password,
             verify_code: verification_code.to_owned(),
         })
-        .map_err(|e| Status::aborted(e.to_string()))?;
+        .map_err(|e| Status::internal(e.to_string()))?;
 
         // Temporarily save to Redis
         redis_conn
             .set_ex(&data_key, &data, 10 * 60)
-            .map_err(|e| Status::aborted(e.to_string()))?;
+            .map_err(|e| Status::internal(e.to_string()))?;
 
         // Send to mailer service
         kafka_producer
@@ -81,13 +78,13 @@ impl AccountService for AccountController {
                         subject: format!("Sign Up Verification Code - {verification_code}"),
                         body: format!("Your sign up verification code is {verification_code}"),
                     }])
-                    .map_err(|e| Status::aborted(e.to_string()))?,
+                    .map_err(|e| Status::internal(e.to_string()))?,
                 ),
             )
-            .map_err(|e| Status::aborted(e.0.to_string()))?
+            .map_err(|e| Status::internal(e.0.to_string()))?
             .await
-            .map_err(|e| Status::aborted(e.to_string()))?
-            .map_err(|e| Status::aborted(e.0.to_string()))?;
+            .map_err(|e| Status::internal(e.to_string()))?
+            .map_err(|e| Status::internal(e.0.to_string()))?;
 
         Ok(Response::new(proto::account::OpRes { is_success: true }))
     }
@@ -142,13 +139,13 @@ impl AccountService for AccountController {
                         subject: "Sign Up Verification Complete".to_string(),
                         body: "Your account is now verified.".to_string(),
                     }])
-                    .map_err(|e| Status::aborted(e.to_string()))?,
+                    .map_err(|e| Status::internal(e.to_string()))?,
                 ),
             )
-            .map_err(|e| Status::aborted(e.0.to_string()))?
+            .map_err(|e| Status::internal(e.0.to_string()))?
             .await
-            .map_err(|e| Status::aborted(e.to_string()))?
-            .map_err(|e| Status::aborted(e.0.to_string()))?;
+            .map_err(|e| Status::internal(e.to_string()))?
+            .map_err(|e| Status::internal(e.0.to_string()))?;
 
         Ok(Response::new(proto::account::OpRes { is_success: true }))
     }
@@ -242,7 +239,7 @@ impl AccountService for AccountController {
         // Temporarily save to Redis
         redis_conn
             .set_ex(&data_key, &data, 10 * 60)
-            .map_err(|e| Status::aborted(e.to_string()))?;
+            .map_err(|e| Status::internal(e.to_string()))?;
 
         // Send to mailer service
         kafka_producer
@@ -253,13 +250,13 @@ impl AccountService for AccountController {
                         subject: format!("Change Email Verification Code - {verification_code}"),
                         body: format!("Your change email verification code is {verification_code}"),
                     }])
-                    .map_err(|e| Status::aborted(e.to_string()))?,
+                    .map_err(|e| Status::internal(e.to_string()))?,
                 ),
             )
-            .map_err(|e| Status::aborted(e.0.to_string()))?
+            .map_err(|e| Status::internal(e.0.to_string()))?
             .await
-            .map_err(|e| Status::aborted(e.to_string()))?
-            .map_err(|e| Status::aborted(e.0.to_string()))?;
+            .map_err(|e| Status::internal(e.to_string()))?
+            .map_err(|e| Status::internal(e.0.to_string()))?;
 
         Ok(Response::new(proto::account::OpRes { is_success: true }))
     }
@@ -330,13 +327,13 @@ impl AccountService for AccountController {
                             ),
                         },
                     ])
-                    .map_err(|e| Status::aborted(e.to_string()))?,
+                    .map_err(|e| Status::internal(e.to_string()))?,
                 ),
             )
-            .map_err(|e| Status::aborted(e.0.to_string()))?
+            .map_err(|e| Status::internal(e.0.to_string()))?
             .await
-            .map_err(|e| Status::aborted(e.to_string()))?
-            .map_err(|e| Status::aborted(e.0.to_string()))?;
+            .map_err(|e| Status::internal(e.to_string()))?
+            .map_err(|e| Status::internal(e.0.to_string()))?;
 
         Ok(Response::new(proto::account::OpRes { is_success: true }))
     }
@@ -372,12 +369,19 @@ impl AccountService for AccountController {
             .first::<model::Account>(db_conn)
             .map_err(|e| Status::internal(e.to_string()))?;
 
+        // Get password hash from account data
+        let account_password_hash = argon2::PasswordHash::new(&account_data.password)
+            .map_err(|e| Status::internal(e.to_string()))?;
+
         // Check if old password is match
-        if req.get_ref().old_password != account_data.password {
-            return Err(Status::aborted(
-                "Failed to change password because of old password doesn't match",
-            ));
-        }
+        argon2
+            .verify_password(
+                &req.get_ref().old_password.as_bytes(),
+                &account_password_hash,
+            )
+            .map_err(|_| {
+                Status::aborted("Failed to change password because of old password doesn't match")
+            })?;
 
         // Hash the password for security
         let hashed_password = argon2
@@ -405,13 +409,13 @@ impl AccountService for AccountController {
                             subject: "Change Password Success".to_string(),
                             body: "Your account password is now changed".to_string(),
                         }])
-                        .map_err(|e| Status::aborted(e.to_string()))?,
+                        .map_err(|e| Status::internal(e.to_string()))?,
                     ),
             )
-            .map_err(|e| Status::aborted(e.0.to_string()))?
+            .map_err(|e| Status::internal(e.0.to_string()))?
             .await
-            .map_err(|e| Status::aborted(e.to_string()))?
-            .map_err(|e| Status::aborted(e.0.to_string()))?;
+            .map_err(|e| Status::internal(e.to_string()))?
+            .map_err(|e| Status::internal(e.0.to_string()))?;
 
         Ok(Response::new(proto::account::OpRes { is_success: true }))
     }
@@ -420,10 +424,22 @@ impl AccountService for AccountController {
         &self,
         req: Request<proto::account::RequestResetPasswordReq>,
     ) -> Result<Response<proto::account::OpRes>> {
+        let db_conn =
+            &mut tools_lib_db::pg::connection::get_connection(&self.app_mode, &self.db_pool)
+                .map_err(|e| Status::internal(e.to_string()))?;
         let redis_conn =
             &mut tools_lib_db::redis::connection::get_connection(&self.app_mode, &self.redis_pool)
                 .map_err(|e| Status::internal(e.to_string()))?;
         let kafka_producer = &self.kafka_producer;
+
+        // Check if email has been registered
+        if schema::account::table
+            .filter(schema::account::email.eq(&req.get_ref().email))
+            .first::<model::Account>(db_conn)
+            .is_err()
+        {
+            return Err(Status::aborted("The email has not been registered."));
+        }
 
         // Create random 6 digit verification code
         let verification_code = rand::thread_rng().gen_range(100000..=999999).to_string();
@@ -440,7 +456,7 @@ impl AccountService for AccountController {
         // Temporarily save to Redis
         redis_conn
             .set_ex(&data_key, &data, 10 * 60)
-            .map_err(|e| Status::aborted(e.to_string()))?;
+            .map_err(|e| Status::internal(e.to_string()))?;
 
         // Send to mailer service
         kafka_producer
@@ -453,13 +469,13 @@ impl AccountService for AccountController {
                             "Your reset password verification code is {verification_code}"
                         ),
                     }])
-                    .map_err(|e| Status::aborted(e.to_string()))?,
+                    .map_err(|e| Status::internal(e.to_string()))?,
                 ),
             )
-            .map_err(|e| Status::aborted(e.0.to_string()))?
+            .map_err(|e| Status::internal(e.0.to_string()))?
             .await
-            .map_err(|e| Status::aborted(e.to_string()))?
-            .map_err(|e| Status::aborted(e.0.to_string()))?;
+            .map_err(|e| Status::internal(e.to_string()))?
+            .map_err(|e| Status::internal(e.0.to_string()))?;
 
         Ok(Response::new(proto::account::OpRes { is_success: true }))
     }
@@ -494,8 +510,6 @@ impl AccountService for AccountController {
         &self,
         req: Request<proto::account::ResetPasswordReq>,
     ) -> Result<Response<proto::account::OpRes>> {
-        println!("{req:?}");
-
         let db_conn =
             &mut tools_lib_db::pg::connection::get_connection(&self.app_mode, &self.db_pool)
                 .map_err(|e| Status::internal(e.to_string()))?;
@@ -552,13 +566,81 @@ impl AccountService for AccountController {
                         subject: "Reset Password Success".to_string(),
                         body: "Your account password is now changed".to_string(),
                     }])
-                    .map_err(|e| Status::aborted(e.to_string()))?,
+                    .map_err(|e| Status::internal(e.to_string()))?,
                 ),
             )
-            .map_err(|e| Status::aborted(e.0.to_string()))?
+            .map_err(|e| Status::internal(e.0.to_string()))?
             .await
-            .map_err(|e| Status::aborted(e.to_string()))?
-            .map_err(|e| Status::aborted(e.0.to_string()))?;
+            .map_err(|e| Status::internal(e.to_string()))?
+            .map_err(|e| Status::internal(e.0.to_string()))?;
+
+        Ok(Response::new(proto::account::OpRes { is_success: true }))
+    }
+
+    async fn get_account(
+        &self,
+        req: Request<proto::account::GetAccountReq>,
+    ) -> Result<Response<proto::account::GetAccountRes>> {
+        let db_conn =
+            &mut tools_lib_db::pg::connection::get_connection(&self.app_mode, &self.db_pool)
+                .map_err(|e| Status::internal(e.to_string()))?;
+        let jwt_secret = &self.jwt_secret;
+
+        // Decode JWT Token
+        let mut validation = jsonwebtoken::Validation::default();
+        validation.required_spec_claims.remove("exp");
+        let account_id = jsonwebtoken::decode::<jwt_claims::Claims>(
+            &req.get_ref().token,
+            &jsonwebtoken::DecodingKey::from_secret(jwt_secret.to_bytes()),
+            &validation,
+        )
+        .map_err(|e| Status::internal(e.to_string()))?
+        .claims
+        .id;
+
+        // Get account data
+        let account_id =
+            Uuid::from_str(&account_id).map_err(|e| Status::internal(e.to_string()))?;
+        let account_data = schema::account::table
+            .find(&account_id)
+            .first::<model::Account>(db_conn)
+            .map_err(|e| Status::internal(e.to_string()))?;
+
+        Ok(Response::new(proto::account::GetAccountRes {
+            id: account_data.id.to_string(),
+            email: account_data.email,
+            created_at: account_data.created_at.to_string(),
+            updated_at: account_data.updated_at.to_string(),
+        }))
+    }
+
+    async fn delete_account(
+        &self,
+        req: Request<proto::account::DeleteAccountReq>,
+    ) -> Result<Response<proto::account::OpRes>> {
+        let db_conn =
+            &mut tools_lib_db::pg::connection::get_connection(&self.app_mode, &self.db_pool)
+                .map_err(|e| Status::internal(e.to_string()))?;
+        let jwt_secret = &self.jwt_secret;
+
+        // Decode JWT Token
+        let mut validation = jsonwebtoken::Validation::default();
+        validation.required_spec_claims.remove("exp");
+        let account_id = jsonwebtoken::decode::<jwt_claims::Claims>(
+            &req.get_ref().token,
+            &jsonwebtoken::DecodingKey::from_secret(jwt_secret.to_bytes()),
+            &validation,
+        )
+        .map_err(|e| Status::internal(e.to_string()))?
+        .claims
+        .id;
+
+        // Delete account
+        let account_id =
+            Uuid::from_str(&account_id).map_err(|e| Status::internal(e.to_string()))?;
+        diesel::delete(schema::account::table.find(account_id))
+            .execute(db_conn)
+            .map_err(|e| Status::internal(e.to_string()))?;
 
         Ok(Response::new(proto::account::OpRes { is_success: true }))
     }

@@ -1,51 +1,12 @@
 use async_graphql::{Context, Object, Result};
-use chrono::NaiveDateTime;
 use diesel::{ExpressionMethods, QueryDsl, RunQueryDsl};
 use tools_lib_db::pg::connection::DbPool;
 use uuid::Uuid;
 
-use crate::{controller::graphql::generic_schema::OpRes, env::AppMode, model, schema, service};
-
-struct ServiceAddress {
-    id: Uuid,
-    service_id: Uuid,
-    address: String,
-    status: model::ServiceAddressStatus,
-    last_used_at: NaiveDateTime,
-    created_at: NaiveDateTime,
-    updated_at: NaiveDateTime,
-}
-
-#[Object]
-impl ServiceAddress {
-    async fn id(&self) -> &Uuid {
-        &self.id
-    }
-
-    async fn service_id(&self) -> &Uuid {
-        &self.service_id
-    }
-
-    async fn address(&self) -> &str {
-        &self.address
-    }
-
-    async fn status(&self) -> &model::ServiceAddressStatus {
-        &self.status
-    }
-
-    async fn last_used_at(&self) -> &NaiveDateTime {
-        &self.last_used_at
-    }
-
-    async fn created_at(&self) -> &NaiveDateTime {
-        &self.created_at
-    }
-
-    async fn updated_at(&self) -> &NaiveDateTime {
-        &self.updated_at
-    }
-}
+use crate::{
+    contract::graphql::service_address::ServiceAddress, controller::graphql::generic_schema::OpRes,
+    env::AppMode, model, schema, service,
+};
 
 #[derive(Default)]
 pub struct ServiceAddressQuery;
