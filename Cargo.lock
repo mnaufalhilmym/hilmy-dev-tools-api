@@ -2633,7 +2633,6 @@ dependencies = [
  "diesel_migrations",
  "jsonwebtoken",
  "prost",
- "prost-types",
  "rand",
  "rdkafka",
  "redis",
@@ -2660,9 +2659,7 @@ dependencies = [
  "diesel",
  "diesel_migrations",
  "prost",
- "prost-types",
  "tonic",
- "tonic-build",
  "tools-account",
  "tools-lib-db",
  "uuid",
@@ -2675,6 +2672,21 @@ dependencies = [
  "diesel",
  "diesel_migrations",
  "redis",
+]
+
+[[package]]
+name = "tools-link"
+version = "0.1.0"
+dependencies = [
+ "chrono",
+ "diesel",
+ "diesel_migrations",
+ "prost",
+ "tokio",
+ "tonic",
+ "tonic-build",
+ "tools-lib-db",
+ "uuid",
 ]
 
 [[package]]

@@ -1,0 +1,56 @@
+syntax = "proto3";
+
+package link;
+
+service LinkService {
+    rpc GetLinks(GetLinksReq) returns (Links) {}
+    rpc GetLinkById(GetLinkByIdReq) returns (Link) {}
+    rpc GetLinkByShortUrl(GetLinkByShortUrlReq) returns (Link) {}
+    rpc CreateLink(CreateLinkReq) returns (Link) {}
+    rpc UpdateLink(UpdateLinkReq) returns (Link) {}
+    rpc DeleteLink(DeleteLinkReq) returns (OpRes) {}
+}
+
+message GetLinksReq {}
+
+message GetLinkByIdReq {
+     string id = 1;
+}
+
+message GetLinkByShortUrlReq {
+    string short_urlk = 1;
+}
+
+message CreateLinkReq {
+    string title = 1;
+    string short_url = 2;
+    string long_url = 3;
+}
+
+message UpdateLinkReq {
+    optional string title = 1;
+    optional string short_url = 2;
+    optional string long_url = 3;
+}
+
+message DeleteLinkReq {
+    string id = 1;
+}
+
+message Links {
+    repeated Link links = 1;
+}
+
+message Link {
+    string id = 1;
+    string title = 2;
+    string short_url = 3;
+    string long_url = 4;
+    uint32 visits = 5;
+    string created_at = 6;
+    string updated_at = 7;
+}
+
+message OpRes {
+    bool is_success = 1;
+}

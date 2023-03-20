@@ -2,8 +2,6 @@ syntax = "proto3";
 
 package account;
 
-import "google/protobuf/timestamp.proto";
-
 service AccountService {
     rpc SignUp(SignUpReq) returns (OpRes) {}
     rpc VerifySignUp(VerifySignUpReq) returns (OpRes) {}

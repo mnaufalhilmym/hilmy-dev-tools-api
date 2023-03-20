@@ -13,7 +13,6 @@ async-graphql = { version = "5", features = ["uuid", "chrono"] }
 async-graphql-actix-web = "5"                                                 # If you need to integrate into actix-web
 tonic = "0.8"
 prost = "0.11"
-prost-types = "0.11"
 diesel = { version = "2", features = ["postgres", "r2d2", "uuid", "chrono"] }
 diesel_migrations = "2"
 uuid = { version = "1", features = ["v4", "fast-rng", "macro-diagnostics"] }
@@ -21,6 +20,3 @@ chrono = "0.4"
 
 tools-account = { path = "../account" }
 tools-lib-db = { path = "../lib/db" }
-
-[build-dependencies]
-tonic-build = "0.8"
