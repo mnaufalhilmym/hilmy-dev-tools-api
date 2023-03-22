@@ -7,7 +7,7 @@ use tools_lib_db::pg::connection::DbPool;
 use uuid::Uuid;
 
 use crate::{
-    contract::graphql::{account::Account, op_result::OpResult, sign_in_result::SignInResult},
+    contract::graphql::{account::Account, op_res::OpRes, sign_in_result::SignInResult},
     dto::token::Token,
     env::AppMode,
     service,
@@ -56,7 +56,7 @@ impl AccountMutation {
         ctx: &Context<'a>,
         email: String,
         password: String,
-    ) -> Result<OpResult> {
+    ) -> Result<OpRes> {
         let app_mode = ctx.data_unchecked::<AppMode>();
         let db_conn = &mut tools_lib_db::pg::connection::get_connection(
             &app_mode,
@@ -70,7 +70,7 @@ impl AccountMutation {
             .sign_up(Request::new(proto::account::SignUpReq { email, password }))
             .await?;
 
-        Ok(OpResult {
+        Ok(OpRes {
             is_success: res.get_ref().is_success,
         })
     }
@@ -80,7 +80,7 @@ impl AccountMutation {
         ctx: &Context<'a>,
         email: String,
         verify_code: String,
-    ) -> Result<OpResult> {
+    ) -> Result<OpRes> {
         let app_mode = ctx.data_unchecked::<AppMode>();
         let db_conn = &mut tools_lib_db::pg::connection::get_connection(
             &app_mode,
@@ -97,7 +97,7 @@ impl AccountMutation {
             }))
             .await?;
 
-        Ok(OpResult {
+        Ok(OpRes {
             is_success: res.get_ref().is_success,
         })
     }
@@ -126,7 +126,7 @@ impl AccountMutation {
         })
     }
 
-    async fn change_email<'a>(&self, ctx: &Context<'a>, new_email: String) -> Result<OpResult> {
+    async fn change_email<'a>(&self, ctx: &Context<'a>, new_email: String) -> Result<OpRes> {
         let app_mode = ctx.data_unchecked::<AppMode>();
         let db_conn = &mut tools_lib_db::pg::connection::get_connection(
             &app_mode,
@@ -148,7 +148,7 @@ impl AccountMutation {
             }))
             .await?;
 
-        Ok(OpResult {
+        Ok(OpRes {
             is_success: res.get_ref().is_success,
         })
     }
@@ -158,7 +158,7 @@ impl AccountMutation {
         ctx: &Context<'a>,
         new_email: String,
         verify_code: String,
-    ) -> Result<OpResult> {
+    ) -> Result<OpRes> {
         let app_mode = ctx.data_unchecked::<AppMode>();
         let db_conn = &mut tools_lib_db::pg::connection::get_connection(
             &app_mode,
@@ -175,7 +175,7 @@ impl AccountMutation {
             }))
             .await?;
 
-        Ok(OpResult {
+        Ok(OpRes {
             is_success: res.get_ref().is_success,
         })
     }
@@ -185,7 +185,7 @@ impl AccountMutation {
         ctx: &Context<'a>,
         old_password: String,
         new_password: String,
-    ) -> Result<OpResult> {
+    ) -> Result<OpRes> {
         let app_mode = ctx.data_unchecked::<AppMode>();
         let db_conn = &mut tools_lib_db::pg::connection::get_connection(
             &app_mode,
@@ -208,16 +208,12 @@ impl AccountMutation {
             }))
             .await?;
 
-        Ok(OpResult {
+        Ok(OpRes {
             is_success: res.get_ref().is_success,
         })
     }
 
-    async fn request_reset_password<'a>(
-        &self,
-        ctx: &Context<'a>,
-        email: String,
-    ) -> Result<OpResult> {
+    async fn request_reset_password<'a>(&self, ctx: &Context<'a>, email: String) -> Result<OpRes> {
         let app_mode = ctx.data_unchecked::<AppMode>();
         let db_conn = &mut tools_lib_db::pg::connection::get_connection(
             &app_mode,
@@ -233,7 +229,7 @@ impl AccountMutation {
             }))
             .await?;
 
-        Ok(OpResult {
+        Ok(OpRes {
             is_success: res.get_ref().is_success,
         })
     }
@@ -243,7 +239,7 @@ impl AccountMutation {
         ctx: &Context<'a>,
         email: String,
         verify_code: String,
-    ) -> Result<OpResult> {
+    ) -> Result<OpRes> {
         let app_mode = ctx.data_unchecked::<AppMode>();
         let db_conn = &mut tools_lib_db::pg::connection::get_connection(
             &app_mode,
@@ -259,7 +255,7 @@ impl AccountMutation {
             ))
             .await?;
 
-        Ok(OpResult {
+        Ok(OpRes {
             is_success: res.get_ref().is_success,
         })
     }
@@ -270,7 +266,7 @@ impl AccountMutation {
         email: String,
         verify_code: String,
         new_password: String,
-    ) -> Result<OpResult> {
+    ) -> Result<OpRes> {
         let app_mode = ctx.data_unchecked::<AppMode>();
         let db_conn = &mut tools_lib_db::pg::connection::get_connection(
             &app_mode,
@@ -288,12 +284,12 @@ impl AccountMutation {
             }))
             .await?;
 
-        Ok(OpResult {
+        Ok(OpRes {
             is_success: res.get_ref().is_success,
         })
     }
 
-    async fn delete_account<'a>(&self, ctx: &Context<'a>) -> Result<OpResult> {
+    async fn delete_account<'a>(&self, ctx: &Context<'a>) -> Result<OpRes> {
         let app_mode = ctx.data_unchecked::<AppMode>();
         let db_conn = &mut tools_lib_db::pg::connection::get_connection(
             &app_mode,
@@ -312,7 +308,7 @@ impl AccountMutation {
             .delete_account(Request::new(proto::account::DeleteAccountReq { token }))
             .await?;
 
-        Ok(OpResult {
+        Ok(OpRes {
             is_success: res.get_ref().is_success,
         })
     }

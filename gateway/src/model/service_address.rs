@@ -6,7 +6,6 @@ use crate::schema;
 
 use super::ServiceAddressStatus;
 
-#[cfg_attr(debug_assertions, derive(Debug))]
 #[derive(Queryable, Insertable)]
 #[diesel(table_name = schema::service_address)]
 pub struct ServiceAddress {

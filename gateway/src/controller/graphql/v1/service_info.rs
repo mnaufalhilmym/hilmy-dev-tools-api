@@ -4,8 +4,9 @@ use tools_lib_db::pg::connection::DbPool;
 use uuid::Uuid;
 
 use crate::{
-    contract::graphql::service_info::ServiceInfo, controller::graphql::generic_schema::OpRes,
-    env::AppMode, model, schema,
+    contract::graphql::{op_res::OpRes, service_info::ServiceInfo},
+    env::AppMode,
+    model, schema,
 };
 
 #[derive(Default)]

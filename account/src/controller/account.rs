@@ -644,4 +644,42 @@ impl AccountService for AccountController {
 
         Ok(Response::new(proto::account::OpRes { is_success: true }))
     }
+
+    async fn validate_token(
+        &self,
+        req: Request<proto::account::ValidateTokenReq>,
+    ) -> Result<Response<proto::account::ValidateTokenRes>> {
+        let db_conn =
+            &mut tools_lib_db::pg::connection::get_connection(&self.app_mode, &self.db_pool)
+                .map_err(|e| Status::internal(e.to_string()))?;
+        let jwt_secret = &self.jwt_secret;
+
+        // Decode JWT Token
+        let mut validation = jsonwebtoken::Validation::default();
+        validation.required_spec_claims.remove("exp");
+        let account_id_string = jsonwebtoken::decode::<jwt_claims::Claims>(
+            &req.get_ref().token,
+            &jsonwebtoken::DecodingKey::from_secret(jwt_secret.to_bytes()),
+            &validation,
+        )
+        .map_err(|e| Status::internal(e.to_string()))?
+        .claims
+        .id;
+
+        // Check if account exist
+        let account_id =
+            Uuid::from_str(&account_id_string).map_err(|e| Status::internal(e.to_string()))?;
+        let is_account_exist = diesel::select(diesel::dsl::exists(
+            schema::account::table.find(&account_id),
+        ))
+        .get_result::<bool>(db_conn)
+        .map_err(|e| Status::internal(e.to_string()))?;
+        if !is_account_exist {
+            return Err(Status::aborted("Account does not exist."));
+        }
+
+        Ok(Response::new(proto::account::ValidateTokenRes {
+            id: account_id_string,
+        }))
+    }
 }

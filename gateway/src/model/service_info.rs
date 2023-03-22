@@ -4,7 +4,6 @@ use uuid::Uuid;
 
 use crate::schema;
 
-#[cfg_attr(debug_assertions, derive(Debug))]
 #[derive(Queryable, Insertable)]
 #[diesel(table_name = schema::service_info)]
 pub struct ServiceInfo {

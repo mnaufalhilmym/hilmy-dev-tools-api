@@ -32,7 +32,4 @@ diesel::table! {
 
 diesel::joinable!(service_address -> service_info (service_id));
 
-diesel::allow_tables_to_appear_in_same_query!(
-    service_address,
-    service_info,
-);
+diesel::allow_tables_to_appear_in_same_query!(service_address, service_info,);

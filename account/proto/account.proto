@@ -18,6 +18,7 @@ service AccountService {
 
     rpc GetAccount(GetAccountReq) returns (GetAccountRes) {}
     rpc DeleteAccount(DeleteAccountReq) returns (OpRes) {}
+    rpc ValidateToken(ValidateTokenReq) returns (ValidateTokenRes) {}
 }
 
 message SignUpReq {
@@ -74,6 +75,10 @@ message DeleteAccountReq {
     string token = 1;
 }
 
+message ValidateTokenReq {
+    string token = 1;
+}
+
 message SignInRes {
     string token = 1;
 }
@@ -87,4 +92,8 @@ message GetAccountRes {
     string email = 2;
     string created_at = 3;
     string updated_at = 4;
+}
+
+message ValidateTokenRes {
+    string id = 1;
 }

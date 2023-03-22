@@ -1,8 +1,17 @@
+use std::error::Error;
+
+use diesel_migrations::{embed_migrations, EmbeddedMigrations};
 use tonic::transport::Server;
+
+use crate::controller::LinkController;
 
 mod controller;
 mod env;
+mod model;
 mod proto;
+mod schema;
+
+const MIGRATIONS: EmbeddedMigrations = embed_migrations!("./migrations");
 
 #[tokio::main]
 async fn main() -> Result<(), Box<dyn Error + Send + Sync>> {

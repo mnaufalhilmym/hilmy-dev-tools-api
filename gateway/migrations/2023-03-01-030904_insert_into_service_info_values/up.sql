@@ -2,4 +2,5 @@
 INSERT INTO
     "service_info"("name")
 VALUES
-    ('account');
+    ('account'),
+    ('link');

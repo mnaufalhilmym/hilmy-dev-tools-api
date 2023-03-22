@@ -19,4 +19,5 @@ uuid = { version = "1", features = ["v4", "fast-rng", "macro-diagnostics"] }
 chrono = "0.4"
 
 tools-account = { path = "../account" }
+tools-link = { path = "../link" }
 tools-lib-db = { path = "../lib/db" }

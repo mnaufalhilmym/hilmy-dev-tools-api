@@ -2662,6 +2662,7 @@ dependencies = [
  "tonic",
  "tools-account",
  "tools-lib-db",
+ "tools-link",
  "uuid",
 ]
 
@@ -2682,6 +2683,7 @@ dependencies = [
  "diesel",
  "diesel_migrations",
  "prost",
+ "prost-build",
  "tokio",
  "tonic",
  "tonic-build",
