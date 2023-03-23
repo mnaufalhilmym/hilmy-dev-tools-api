@@ -1,4 +1,5 @@
 pub mod account;
+pub mod apprepo;
 pub mod link;
 pub mod op_res;
 pub mod service_address;

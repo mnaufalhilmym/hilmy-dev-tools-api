@@ -2647,6 +2647,22 @@ dependencies = [
 ]
 
 [[package]]
+name = "tools-apprepo"
+version = "0.1.0"
+dependencies = [
+ "chrono",
+ "diesel",
+ "diesel_migrations",
+ "prost",
+ "prost-build",
+ "tokio",
+ "tonic",
+ "tonic-build",
+ "tools-lib-db",
+ "uuid",
+]
+
+[[package]]
 name = "tools-gateway"
 version = "0.1.0"
 dependencies = [
@@ -2661,6 +2677,7 @@ dependencies = [
  "prost",
  "tonic",
  "tools-account",
+ "tools-apprepo",
  "tools-lib-db",
  "tools-link",
  "uuid",

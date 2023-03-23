@@ -163,11 +163,12 @@ impl AccountService for AccountController {
         // Select user account from database
         let account_data = schema::account::table
             .filter(schema::account::email.eq(&req.get_ref().email))
-            .first::<model::Account>(db_conn)
+            .select((schema::account::id, schema::account::password))
+            .first::<(Uuid, String)>(db_conn)
             .map_err(|e| Status::internal(e.to_string()))?;
 
         // Get password hash from account data
-        let account_password_hash = argon2::PasswordHash::new(&account_data.password)
+        let account_password_hash = argon2::PasswordHash::new(&account_data.1)
             .map_err(|e| Status::internal(e.to_string()))?;
 
         // Verify user inputted credential
@@ -177,7 +178,7 @@ impl AccountService for AccountController {
 
         // Create JWT
         let claims = jwt_claims::Claims {
-            id: account_data.id.to_string(),
+            id: account_data.0.to_string(),
         };
         let token = jsonwebtoken::encode(
             &jsonwebtoken::Header::default(),
@@ -215,11 +216,11 @@ impl AccountService for AccountController {
         .id;
 
         // Get account data
-        let account_id =
-            Uuid::from_str(&account_id).map_err(|e| Status::internal(e.to_string()))?;
-        let account_data = schema::account::table
+        let account_id = Uuid::from_str(&account_id).map_err(|e| Status::aborted(e.to_string()))?;
+        let account_email = schema::account::table
             .find(&account_id)
-            .first::<model::Account>(db_conn)
+            .select(schema::account::email)
+            .first::<String>(db_conn)
             .map_err(|e| Status::internal(e.to_string()))?;
 
         // Create random 6 digit verification code
@@ -231,7 +232,7 @@ impl AccountService for AccountController {
         // Serialize data
         let data = serde_json::to_string(&AccountChangeEmail {
             new_email: req.get_ref().new_email.to_owned(),
-            old_email: account_data.email,
+            old_email: account_email,
             verify_code: verification_code.to_owned(),
         })
         .map_err(|e| Status::internal(e.to_string()))?;
@@ -362,15 +363,15 @@ impl AccountService for AccountController {
         .id;
 
         // Get account data
-        let account_id =
-            Uuid::from_str(&account_id).map_err(|e| Status::internal(e.to_string()))?;
+        let account_id = Uuid::from_str(&account_id).map_err(|e| Status::aborted(e.to_string()))?;
         let account_data = schema::account::table
             .find(account_id)
-            .first::<model::Account>(db_conn)
+            .select((schema::account::email, schema::account::password))
+            .first::<(String, String)>(db_conn)
             .map_err(|e| Status::internal(e.to_string()))?;
 
         // Get password hash from account data
-        let account_password_hash = argon2::PasswordHash::new(&account_data.password)
+        let account_password_hash = argon2::PasswordHash::new(&account_data.1)
             .map_err(|e| Status::internal(e.to_string()))?;
 
         // Check if old password is match
@@ -402,10 +403,10 @@ impl AccountService for AccountController {
         kafka_producer
             .send_result(
                 FutureRecord::to("mailer")
-                    .key(&format!("change_password-{}", &account_data.email))
+                    .key(&format!("change_password-{}", &account_data.0))
                     .payload(
                         &serde_json::to_string(&[&tools_mailer::contract::MailReq {
-                            to: account_data.email.to_owned(),
+                            to: account_data.0.to_owned(),
                             subject: "Change Password Success".to_string(),
                             body: "Your account password is now changed".to_string(),
                         }])
@@ -433,10 +434,11 @@ impl AccountService for AccountController {
         let kafka_producer = &self.kafka_producer;
 
         // Check if email has been registered
-        if schema::account::table
-            .filter(schema::account::email.eq(&req.get_ref().email))
-            .first::<model::Account>(db_conn)
-            .is_err()
+        if !diesel::select(diesel::dsl::exists(
+            schema::account::table.filter(schema::account::email.eq(&req.get_ref().email)),
+        ))
+        .get_result(db_conn)
+        .map_err(|e| Status::internal(e.to_string()))?
         {
             return Err(Status::aborted("The email has not been registered."));
         }
@@ -599,8 +601,7 @@ impl AccountService for AccountController {
         .id;
 
         // Get account data
-        let account_id =
-            Uuid::from_str(&account_id).map_err(|e| Status::internal(e.to_string()))?;
+        let account_id = Uuid::from_str(&account_id).map_err(|e| Status::aborted(e.to_string()))?;
         let account_data = schema::account::table
             .find(&account_id)
             .first::<model::Account>(db_conn)
@@ -636,8 +637,7 @@ impl AccountService for AccountController {
         .id;
 
         // Delete account
-        let account_id =
-            Uuid::from_str(&account_id).map_err(|e| Status::internal(e.to_string()))?;
+        let account_id = Uuid::from_str(&account_id).map_err(|e| Status::aborted(e.to_string()))?;
         diesel::delete(schema::account::table.find(account_id))
             .execute(db_conn)
             .map_err(|e| Status::internal(e.to_string()))?;
@@ -657,7 +657,7 @@ impl AccountService for AccountController {
         // Decode JWT Token
         let mut validation = jsonwebtoken::Validation::default();
         validation.required_spec_claims.remove("exp");
-        let account_id_string = jsonwebtoken::decode::<jwt_claims::Claims>(
+        let account_id = jsonwebtoken::decode::<jwt_claims::Claims>(
             &req.get_ref().token,
             &jsonwebtoken::DecodingKey::from_secret(jwt_secret.to_bytes()),
             &validation,
@@ -666,20 +666,17 @@ impl AccountService for AccountController {
         .claims
         .id;
 
-        // Check if account exist
-        let account_id =
-            Uuid::from_str(&account_id_string).map_err(|e| Status::internal(e.to_string()))?;
-        let is_account_exist = diesel::select(diesel::dsl::exists(
-            schema::account::table.find(&account_id),
-        ))
-        .get_result::<bool>(db_conn)
-        .map_err(|e| Status::internal(e.to_string()))?;
-        if !is_account_exist {
-            return Err(Status::aborted("Account does not exist."));
-        }
+        // Get account data
+        let account_id = Uuid::from_str(&account_id).map_err(|e| Status::aborted(e.to_string()))?;
+        let account_data = schema::account::table
+            .find(&account_id)
+            .select((schema::account::id, schema::account::role))
+            .first::<(Uuid, model::AccountRole)>(db_conn)
+            .map_err(|e| Status::internal(e.to_string()))?;
 
         Ok(Response::new(proto::account::ValidateTokenRes {
-            id: account_id_string,
+            id: account_data.0.to_string(),
+            role: account_data.1.to_grpc_enum(),
         }))
     }
 }

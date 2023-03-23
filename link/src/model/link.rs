@@ -17,7 +17,7 @@ pub struct Link {
     pub updated_at: NaiveDateTime,
 }
 
-#[derive(AsChangeset, Default)]
+#[derive(AsChangeset)]
 #[diesel(table_name = schema::link)]
 pub struct LinkChangeSet {
     pub title: Option<String>,

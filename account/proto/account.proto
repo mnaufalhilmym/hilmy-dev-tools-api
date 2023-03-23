@@ -21,6 +21,11 @@ service AccountService {
     rpc ValidateToken(ValidateTokenReq) returns (ValidateTokenRes) {}
 }
 
+enum AccountRole {
+    ACCOUNT_ROLE_USER = 0;
+    ACCOUNT_ROLE_ADMIN = 1;
+}
+
 message SignUpReq {
     string email = 1;
     string password = 2;
@@ -96,4 +101,5 @@ message GetAccountRes {
 
 message ValidateTokenRes {
     string id = 1;
+    AccountRole role = 2;
 }

@@ -3,4 +3,5 @@ INSERT INTO
     "service_info"("name")
 VALUES
     ('account'),
-    ('link');
+    ('link'),
+    ('apprepos');

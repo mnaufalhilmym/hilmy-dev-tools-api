@@ -55,10 +55,45 @@ impl LinkService for LinkController {
 
         // Get a link with an id
         let link_id =
-            Uuid::from_str(&req.get_ref().id).map_err(|e| Status::internal(e.to_string()))?;
+            Uuid::from_str(&req.get_ref().id).map_err(|e| Status::aborted(e.to_string()))?;
         let link = schema::link::table
             .find(&link_id)
             .first::<model::Link>(db_conn)
+            .map_err(|e| Status::internal(e.to_string()))?;
+
+        Ok(Response::new(proto::link::Link {
+            id: link.id.to_string(),
+            title: link.title.to_owned(),
+            short_url: link.short_url.to_owned(),
+            long_url: link.long_url.to_owned(),
+            visits: link.visits,
+            created_at: link.created_at.to_string(),
+            updated_at: link.updated_at.to_string(),
+        }))
+    }
+
+    async fn visit_link(
+        &self,
+        req: Request<proto::link::VisitLinkReq>,
+    ) -> Result<Response<proto::link::Link>> {
+        let db_conn =
+            &mut tools_lib_db::pg::connection::get_connection(&self.app_mode, &self.db_pool)
+                .map_err(|e| Status::internal(e.to_string()))?;
+
+        // Get a link with a short url
+        let (link_id, link_visits) = schema::link::table
+            .filter(schema::link::short_url.eq(&req.get_ref().short_url))
+            .select((schema::link::id, schema::link::visits))
+            .first::<(Uuid, i32)>(db_conn)
+            .map_err(|e| Status::internal(e.to_string()))?;
+
+        // Increment visits by one
+        let link = diesel::update(schema::link::table.find(&link_id))
+            .set((
+                schema::link::visits.eq(link_visits + 1),
+                schema::link::updated_at.eq(diesel::dsl::now),
+            ))
+            .get_result::<model::Link>(db_conn)
             .map_err(|e| Status::internal(e.to_string()))?;
 
         Ok(Response::new(proto::link::Link {
@@ -113,7 +148,7 @@ impl LinkService for LinkController {
 
         // Check if the link is created by the id
         let link_id =
-            Uuid::from_str(&req.get_ref().id).map_err(|e| Status::internal(e.to_string()))?;
+            Uuid::from_str(&req.get_ref().id).map_err(|e| Status::aborted(e.to_string()))?;
         let created_by_id = Uuid::from_str(&req.get_ref().created_by_id).unwrap();
         let is_link_exist_and_created_by_id = diesel::select(diesel::dsl::exists(
             schema::link::table
@@ -127,14 +162,18 @@ impl LinkService for LinkController {
         }
 
         // Update the link
-        let link = diesel::update(schema::link::table)
-            .set(model::LinkChangeSet {
-                title: req.get_ref().title.to_owned(),
-                long_url: req.get_ref().long_url.to_owned(),
-                short_url: req.get_ref().short_url.to_owned(),
-            })
+        let link = diesel::update(schema::link::table.find(&link_id))
+            .set((
+                model::LinkChangeSet {
+                    title: req.get_ref().title.to_owned(),
+                    long_url: req.get_ref().long_url.to_owned(),
+                    short_url: req.get_ref().short_url.to_owned(),
+                },
+                schema::link::updated_at.eq(diesel::dsl::now),
+            ))
             .get_result::<model::Link>(db_conn)
             .map_err(|e| Status::internal(e.to_string()))?;
+
         Ok(Response::new(proto::link::Link {
             id: link.id.to_string(),
             title: link.title.to_owned(),
@@ -156,7 +195,7 @@ impl LinkService for LinkController {
 
         // Check if the link is created by the id
         let link_id =
-            Uuid::from_str(&req.get_ref().id).map_err(|e| Status::internal(e.to_string()))?;
+            Uuid::from_str(&req.get_ref().id).map_err(|e| Status::aborted(e.to_string()))?;
         let created_by_id = Uuid::from_str(&req.get_ref().created_by_id).unwrap();
         let is_link_exist_and_created_by_id = diesel::select(diesel::dsl::exists(
             schema::link::table

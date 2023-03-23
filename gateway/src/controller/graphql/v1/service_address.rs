@@ -5,8 +5,9 @@ use uuid::Uuid;
 
 use crate::{
     contract::graphql::{op_res::OpRes, service_address::ServiceAddress},
+    dto::token::Token,
     env::AppMode,
-    model, schema, service,
+    helper, model, schema, service,
 };
 
 #[derive(Default)]
@@ -17,18 +18,24 @@ impl ServiceAddressQuery {
     async fn services_address<'a>(
         &self,
         ctx: &Context<'a>,
-        id: Option<Uuid>,
         service_id: Option<Uuid>,
     ) -> Result<Vec<ServiceAddress>> {
         let db_conn = &mut tools_lib_db::pg::connection::get_connection(
             ctx.data_unchecked::<AppMode>(),
             ctx.data_unchecked::<DbPool>(),
         )?;
+        let token = ctx
+            .data_opt::<Token>()
+            .ok_or("Token doesn't exist")?
+            .0
+            .to_owned();
+
+        if !helper::is_admin(db_conn, token).await? {
+            return Err("Forbidden".into());
+        }
 
         let mut query = schema::service_address::table.into_boxed();
-        if let Some(id) = id {
-            query = query.filter(schema::service_address::id.eq(id));
-        } else if let Some(service_id) = service_id {
+        if let Some(service_id) = service_id {
             query = query.filter(schema::service_address::service_id.eq(service_id));
         }
 
@@ -45,6 +52,36 @@ impl ServiceAddressQuery {
                 updated_at: service_address.updated_at.to_owned(),
             })
             .collect())
+    }
+
+    async fn service_address<'a>(&self, ctx: &Context<'a>, id: Uuid) -> Result<ServiceAddress> {
+        let db_conn = &mut tools_lib_db::pg::connection::get_connection(
+            ctx.data_unchecked::<AppMode>(),
+            ctx.data_unchecked::<DbPool>(),
+        )?;
+        let token = ctx
+            .data_opt::<Token>()
+            .ok_or("Token doesn't exist")?
+            .0
+            .to_owned();
+
+        if !helper::is_admin(db_conn, token).await? {
+            return Err("Forbidden".into());
+        }
+
+        let service_address = schema::service_address::table
+            .find(&id)
+            .first::<model::ServiceAddress>(db_conn)?;
+
+        Ok(ServiceAddress {
+            id: service_address.id,
+            service_id: service_address.service_id,
+            address: service_address.address,
+            status: service_address.status,
+            last_used_at: service_address.last_used_at,
+            created_at: service_address.created_at,
+            updated_at: service_address.updated_at,
+        })
     }
 }
 
@@ -63,6 +100,15 @@ impl ServiceAddressMutation {
             ctx.data_unchecked::<AppMode>(),
             ctx.data_unchecked::<DbPool>(),
         )?;
+        let token = ctx
+            .data_opt::<Token>()
+            .ok_or("Token doesn't exist")?
+            .0
+            .to_owned();
+
+        if !helper::is_admin(db_conn, token).await? {
+            return Err("Forbidden".into());
+        }
 
         let service_address = diesel::insert_into(schema::service_address::table)
             .values((
@@ -96,6 +142,15 @@ impl ServiceAddressMutation {
             ctx.data_unchecked::<AppMode>(),
             ctx.data_unchecked::<DbPool>(),
         )?;
+        let token = ctx
+            .data_opt::<Token>()
+            .ok_or("Token doesn't exist")?
+            .0
+            .to_owned();
+
+        if !helper::is_admin(db_conn, token).await? {
+            return Err("Forbidden".into());
+        }
 
         let mut change_set = model::ServiceAddressChangeSet {
             service_id,
@@ -146,6 +201,15 @@ impl ServiceAddressMutation {
             ctx.data_unchecked::<AppMode>(),
             ctx.data_unchecked::<DbPool>(),
         )?;
+        let token = ctx
+            .data_opt::<Token>()
+            .ok_or("Token doesn't exist")?
+            .0
+            .to_owned();
+
+        if !helper::is_admin(db_conn, token).await? {
+            return Err("Forbidden".into());
+        }
 
         diesel::delete(schema::service_address::table.find(id)).execute(db_conn)?;
 

@@ -2,7 +2,6 @@ use std::str::FromStr;
 
 use async_graphql::{Context, Object, Result};
 use tonic::Request;
-use tools_account::proto::account::AccountServiceClient;
 use tools_lib_db::pg::connection::DbPool;
 use tools_link::proto::link::LinkServiceClient;
 use uuid::Uuid;
@@ -11,6 +10,7 @@ use crate::{
     contract::graphql::{link::Link, op_res::OpRes},
     dto::token::Token,
     env::AppMode,
+    helper::get_account_id,
     service,
 };
 
@@ -19,11 +19,10 @@ pub struct LinkQuery;
 
 #[Object]
 impl LinkQuery {
-    async fn get_links<'a>(&self, ctx: &Context<'a>) -> Result<Vec<Link>> {
-        let app_mode = ctx.data_unchecked::<AppMode>();
+    async fn links<'a>(&self, ctx: &Context<'a>) -> Result<Vec<Link>> {
         let db_conn = &mut tools_lib_db::pg::connection::get_connection(
-            &app_mode,
-            &ctx.data_unchecked::<DbPool>(),
+            ctx.data_unchecked::<AppMode>(),
+            ctx.data_unchecked::<DbPool>(),
         )?;
         let token = ctx
             .data_opt::<Token>()
@@ -31,17 +30,7 @@ impl LinkQuery {
             .0
             .to_owned();
 
-        let mut client =
-            AccountServiceClient::new(service::grpc::client::get(db_conn, "account").await?);
-
-        let account_id = client
-            .validate_token(Request::new(
-                tools_account::proto::account::ValidateTokenReq { token },
-            ))
-            .await?
-            .get_ref()
-            .id
-            .to_owned();
+        let account_id = get_account_id(db_conn, token).await?;
 
         let mut client = LinkServiceClient::new(service::grpc::client::get(db_conn, "link").await?);
 
@@ -67,11 +56,10 @@ impl LinkQuery {
             .collect())
     }
 
-    async fn get_link<'a>(&self, ctx: &Context<'a>, id: Uuid) -> Result<Link> {
-        let app_mode = ctx.data_unchecked::<AppMode>();
+    async fn link<'a>(&self, ctx: &Context<'a>, id: Uuid) -> Result<Link> {
         let db_conn = &mut tools_lib_db::pg::connection::get_connection(
-            &app_mode,
-            &ctx.data_unchecked::<DbPool>(),
+            ctx.data_unchecked::<AppMode>(),
+            ctx.data_unchecked::<DbPool>(),
         )?;
         let token = ctx
             .data_opt::<Token>()
@@ -79,17 +67,7 @@ impl LinkQuery {
             .0
             .to_owned();
 
-        let mut client =
-            AccountServiceClient::new(service::grpc::client::get(db_conn, "account").await?);
-
-        let account_id = client
-            .validate_token(Request::new(
-                tools_account::proto::account::ValidateTokenReq { token },
-            ))
-            .await?
-            .get_ref()
-            .id
-            .to_owned();
+        let account_id = get_account_id(db_conn, token).await?;
 
         let mut client = LinkServiceClient::new(service::grpc::client::get(db_conn, "link").await?);
 
@@ -97,6 +75,31 @@ impl LinkQuery {
             .get_link(Request::new(tools_link::proto::link::GetLinkReq {
                 id: id.to_string(),
                 created_by_id: account_id,
+            }))
+            .await?;
+
+        Ok(Link {
+            id: Uuid::from_str(&res.get_ref().id)?,
+            title: res.get_ref().title.to_owned(),
+            short_url: res.get_ref().short_url.to_owned(),
+            long_url: res.get_ref().long_url.to_owned(),
+            visits: res.get_ref().visits,
+            created_at: res.get_ref().created_at.to_owned(),
+            updated_at: res.get_ref().updated_at.to_owned(),
+        })
+    }
+
+    async fn visit_link<'a>(&self, ctx: &Context<'a>, short_url: String) -> Result<Link> {
+        let db_conn = &mut tools_lib_db::pg::connection::get_connection(
+            ctx.data_unchecked::<AppMode>(),
+            ctx.data_unchecked::<DbPool>(),
+        )?;
+
+        let mut client = LinkServiceClient::new(service::grpc::client::get(db_conn, "link").await?);
+
+        let res = client
+            .visit_link(Request::new(tools_link::proto::link::VisitLinkReq {
+                short_url,
             }))
             .await?;
 
@@ -124,10 +127,9 @@ impl LinkMutation {
         short_url: String,
         long_url: String,
     ) -> Result<Link> {
-        let app_mode = ctx.data_unchecked::<AppMode>();
         let db_conn = &mut tools_lib_db::pg::connection::get_connection(
-            &app_mode,
-            &ctx.data_unchecked::<DbPool>(),
+            ctx.data_unchecked::<AppMode>(),
+            ctx.data_unchecked::<DbPool>(),
         )?;
         let token = ctx
             .data_opt::<Token>()
@@ -135,17 +137,7 @@ impl LinkMutation {
             .0
             .to_owned();
 
-        let mut client =
-            AccountServiceClient::new(service::grpc::client::get(db_conn, "account").await?);
-
-        let account_id = client
-            .validate_token(Request::new(
-                tools_account::proto::account::ValidateTokenReq { token },
-            ))
-            .await?
-            .get_ref()
-            .id
-            .to_owned();
+        let account_id = get_account_id(db_conn, token).await?;
 
         let mut client = LinkServiceClient::new(service::grpc::client::get(db_conn, "link").await?);
 
@@ -177,10 +169,9 @@ impl LinkMutation {
         short_url: Option<String>,
         long_url: Option<String>,
     ) -> Result<Link> {
-        let app_mode = ctx.data_unchecked::<AppMode>();
         let db_conn = &mut tools_lib_db::pg::connection::get_connection(
-            &app_mode,
-            &ctx.data_unchecked::<DbPool>(),
+            ctx.data_unchecked::<AppMode>(),
+            ctx.data_unchecked::<DbPool>(),
         )?;
         let token = ctx
             .data_opt::<Token>()
@@ -188,17 +179,7 @@ impl LinkMutation {
             .0
             .to_owned();
 
-        let mut client =
-            AccountServiceClient::new(service::grpc::client::get(db_conn, "account").await?);
-
-        let account_id = client
-            .validate_token(Request::new(
-                tools_account::proto::account::ValidateTokenReq { token },
-            ))
-            .await?
-            .get_ref()
-            .id
-            .to_owned();
+        let account_id = get_account_id(db_conn, token).await?;
 
         let mut client = LinkServiceClient::new(service::grpc::client::get(db_conn, "link").await?);
 
@@ -224,10 +205,9 @@ impl LinkMutation {
     }
 
     async fn delete_link<'a>(&self, ctx: &Context<'a>, id: Uuid) -> Result<OpRes> {
-        let app_mode = ctx.data_unchecked::<AppMode>();
         let db_conn = &mut tools_lib_db::pg::connection::get_connection(
-            &app_mode,
-            &ctx.data_unchecked::<DbPool>(),
+            ctx.data_unchecked::<AppMode>(),
+            ctx.data_unchecked::<DbPool>(),
         )?;
         let token = ctx
             .data_opt::<Token>()
@@ -235,27 +215,19 @@ impl LinkMutation {
             .0
             .to_owned();
 
-        let mut client =
-            AccountServiceClient::new(service::grpc::client::get(db_conn, "account").await?);
-
-        let account_id = client
-            .validate_token(Request::new(
-                tools_account::proto::account::ValidateTokenReq { token },
-            ))
-            .await?
-            .get_ref()
-            .id
-            .to_owned();
+        let account_id = get_account_id(db_conn, token).await?;
 
         let mut client = LinkServiceClient::new(service::grpc::client::get(db_conn, "link").await?);
 
-        client
+        let res = client
             .delete_link(Request::new(tools_link::proto::link::DeleteLinkReq {
                 id: id.to_string(),
                 created_by_id: account_id,
             }))
             .await?;
 
-        Ok(OpRes { is_success: true })
+        Ok(OpRes {
+            is_success: res.get_ref().is_success,
+        })
     }
 }

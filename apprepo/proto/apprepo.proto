@@ -1,0 +1,46 @@
+syntax = "proto3";
+
+package apprepo;
+
+service ApprepoService {
+    rpc GetApprepos(GetAppreposReq) returns (Apprepos) {}
+    rpc CreateApprepo(CreateApprepoReq) returns (Apprepo) {}
+    rpc UpdateApprepo(UpdateApprepoReq) returns (Apprepo) {}
+    rpc DeleteApprepo(DeleteApprepoReq) returns (OpRes) {}
+}
+
+message GetAppreposReq {}
+
+message CreateApprepoReq {
+    string name = 1;
+    string icon = 2;
+    string link = 3;
+}
+
+message UpdateApprepoReq {
+    string id = 1;
+    optional string name = 2;
+    optional string icon = 3;
+    optional string link = 4;
+}
+
+message DeleteApprepoReq {
+    string id = 1;
+}
+
+message Apprepos {
+    repeated Apprepo apprepos = 1;
+}
+
+message Apprepo {
+    string id = 1;
+    string name = 2;
+    string icon = 3;
+    string link = 4;
+    string created_at = 5;
+    string updated_at = 6;
+}
+
+message OpRes {
+    bool is_success = 1;
+}

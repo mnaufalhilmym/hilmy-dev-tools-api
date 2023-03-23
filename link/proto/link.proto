@@ -5,6 +5,7 @@ package link;
 service LinkService {
     rpc GetLinks(GetLinksReq) returns (Links) {}
     rpc GetLink(GetLinkReq) returns (Link) {}
+    rpc VisitLink(VisitLinkReq) returns (Link) {}
     rpc CreateLink(CreateLinkReq) returns (Link) {}
     rpc UpdateLink(UpdateLinkReq) returns (Link) {}
     rpc DeleteLink(DeleteLinkReq) returns (OpRes) {}
@@ -15,8 +16,12 @@ message GetLinksReq {
 }
 
 message GetLinkReq {
-     string id = 1;
-     string created_by_id = 2;
+    string id = 1;
+    string created_by_id = 2;
+}
+
+message VisitLinkReq {
+    string short_url = 1;
 }
 
 message CreateLinkReq {

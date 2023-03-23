@@ -32,7 +32,7 @@ pub async fn get(
             schema::service_info::table
                 .on(schema::service_address::service_id.eq(schema::service_info::id)),
         )
-        .order(schema::service_address::address.asc())
+        .order(schema::service_address::last_used_at.asc())
         .select((
             schema::service_address::id,
             schema::service_address::address,
@@ -65,16 +65,18 @@ pub async fn get(
                 None
             }
         };
+        if channel.is_some() {
+            break;
+        }
     }
 
     if let Some(channel) = channel {
-        let _ =
-            diesel::update(schema::service_address::table.find(used_service_address_id.unwrap()))
-                .set((
-                    schema::service_address::last_used_at.eq(diesel::dsl::now),
-                    schema::service_address::updated_at.eq(diesel::dsl::now),
-                ))
-                .execute(db_conn);
+        diesel::update(schema::service_address::table.find(used_service_address_id.unwrap()))
+            .set((
+                schema::service_address::last_used_at.eq(diesel::dsl::now),
+                schema::service_address::updated_at.eq(diesel::dsl::now),
+            ))
+            .execute(db_conn)?;
 
         return Ok(channel);
     }

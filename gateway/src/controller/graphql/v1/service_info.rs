@@ -5,8 +5,9 @@ use uuid::Uuid;
 
 use crate::{
     contract::graphql::{op_res::OpRes, service_info::ServiceInfo},
+    dto::token::Token,
     env::AppMode,
-    model, schema,
+    helper, model, schema,
 };
 
 #[derive(Default)]
@@ -17,18 +18,24 @@ impl ServiceInfoQuery {
     async fn services_info<'a>(
         &self,
         ctx: &Context<'a>,
-        id: Option<Uuid>,
         name: Option<String>,
     ) -> Result<Vec<ServiceInfo>> {
         let db_conn = &mut tools_lib_db::pg::connection::get_connection(
             ctx.data_unchecked::<AppMode>(),
             ctx.data_unchecked::<DbPool>(),
         )?;
+        let token = ctx
+            .data_opt::<Token>()
+            .ok_or("Token doesn't exist")?
+            .0
+            .to_owned();
+
+        if !helper::is_admin(db_conn, token).await? {
+            return Err("Forbidden".into());
+        }
 
         let mut query = schema::service_info::table.into_boxed();
-        if let Some(id) = id {
-            query = query.filter(schema::service_info::id.eq(id));
-        } else if let Some(name) = name {
+        if let Some(name) = name {
             query = query.filter(schema::service_info::name.eq(name));
         }
 
@@ -42,6 +49,33 @@ impl ServiceInfoQuery {
                 updated_at: service_info.created_at.to_owned(),
             })
             .collect())
+    }
+
+    async fn service_info<'a>(&self, ctx: &Context<'a>, id: Uuid) -> Result<ServiceInfo> {
+        let db_conn = &mut tools_lib_db::pg::connection::get_connection(
+            ctx.data_unchecked::<AppMode>(),
+            ctx.data_unchecked::<DbPool>(),
+        )?;
+        let token = ctx
+            .data_opt::<Token>()
+            .ok_or("Token doesn't exist")?
+            .0
+            .to_owned();
+
+        if !helper::is_admin(db_conn, token).await? {
+            return Err("Forbidden".into());
+        }
+
+        let service_info = schema::service_info::table
+            .find(&id)
+            .first::<model::ServiceInfo>(db_conn)?;
+
+        Ok(ServiceInfo {
+            id: service_info.id,
+            name: service_info.name,
+            created_at: service_info.created_at,
+            updated_at: service_info.created_at,
+        })
     }
 }
 
@@ -59,6 +93,15 @@ impl ServiceInfoMutation {
             ctx.data_unchecked::<AppMode>(),
             ctx.data_unchecked::<DbPool>(),
         )?;
+        let token = ctx
+            .data_opt::<Token>()
+            .ok_or("Token doesn't exist")?
+            .0
+            .to_owned();
+
+        if !helper::is_admin(db_conn, token).await? {
+            return Err("Forbidden".into());
+        }
 
         let service_info = diesel::insert_into(schema::service_info::table)
             .values(schema::service_info::name.eq(&name))
@@ -82,6 +125,15 @@ impl ServiceInfoMutation {
             ctx.data_unchecked::<AppMode>(),
             ctx.data_unchecked::<DbPool>(),
         )?;
+        let token = ctx
+            .data_opt::<Token>()
+            .ok_or("Token doesn't exist")?
+            .0
+            .to_owned();
+
+        if !helper::is_admin(db_conn, token).await? {
+            return Err("Forbidden".into());
+        }
 
         let service_info = diesel::update(schema::service_info::table.find(id))
             .set((
@@ -98,11 +150,20 @@ impl ServiceInfoMutation {
         })
     }
 
-    async fn delete_service_address<'a>(&self, ctx: &Context<'a>, id: Uuid) -> Result<OpRes> {
+    async fn delete_service_info<'a>(&self, ctx: &Context<'a>, id: Uuid) -> Result<OpRes> {
         let db_conn = &mut tools_lib_db::pg::connection::get_connection(
             ctx.data_unchecked::<AppMode>(),
             ctx.data_unchecked::<DbPool>(),
         )?;
+        let token = ctx
+            .data_opt::<Token>()
+            .ok_or("Token doesn't exist")?
+            .0
+            .to_owned();
+
+        if !helper::is_admin(db_conn, token).await? {
+            return Err("Forbidden".into());
+        }
 
         diesel::delete(schema::service_info::table.find(id)).execute(db_conn)?;
 

@@ -11,6 +11,7 @@ mod contract;
 mod controller;
 mod dto;
 mod env;
+mod helper;
 mod model;
 mod schema;
 mod service;

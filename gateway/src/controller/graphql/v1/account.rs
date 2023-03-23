@@ -19,10 +19,9 @@ pub struct AccountQuery;
 #[Object]
 impl AccountQuery {
     async fn account<'a>(&self, ctx: &Context<'a>) -> Result<Account> {
-        let app_mode = ctx.data_unchecked::<AppMode>();
         let db_conn = &mut tools_lib_db::pg::connection::get_connection(
-            &app_mode,
-            &ctx.data_unchecked::<DbPool>(),
+            ctx.data_unchecked::<AppMode>(),
+            ctx.data_unchecked::<DbPool>(),
         )?;
         let token = ctx
             .data_opt::<Token>()
@@ -57,10 +56,9 @@ impl AccountMutation {
         email: String,
         password: String,
     ) -> Result<OpRes> {
-        let app_mode = ctx.data_unchecked::<AppMode>();
         let db_conn = &mut tools_lib_db::pg::connection::get_connection(
-            &app_mode,
-            &ctx.data_unchecked::<DbPool>(),
+            ctx.data_unchecked::<AppMode>(),
+            ctx.data_unchecked::<DbPool>(),
         )?;
 
         let mut client =
@@ -81,10 +79,9 @@ impl AccountMutation {
         email: String,
         verify_code: String,
     ) -> Result<OpRes> {
-        let app_mode = ctx.data_unchecked::<AppMode>();
         let db_conn = &mut tools_lib_db::pg::connection::get_connection(
-            &app_mode,
-            &ctx.data_unchecked::<DbPool>(),
+            ctx.data_unchecked::<AppMode>(),
+            ctx.data_unchecked::<DbPool>(),
         )?;
 
         let mut client =
@@ -108,10 +105,9 @@ impl AccountMutation {
         email: String,
         password: String,
     ) -> Result<SignInResult> {
-        let app_mode = ctx.data_unchecked::<AppMode>();
         let db_conn = &mut tools_lib_db::pg::connection::get_connection(
-            &app_mode,
-            &ctx.data_unchecked::<DbPool>(),
+            ctx.data_unchecked::<AppMode>(),
+            ctx.data_unchecked::<DbPool>(),
         )?;
 
         let mut client =
@@ -127,10 +123,9 @@ impl AccountMutation {
     }
 
     async fn change_email<'a>(&self, ctx: &Context<'a>, new_email: String) -> Result<OpRes> {
-        let app_mode = ctx.data_unchecked::<AppMode>();
         let db_conn = &mut tools_lib_db::pg::connection::get_connection(
-            &app_mode,
-            &ctx.data_unchecked::<DbPool>(),
+            ctx.data_unchecked::<AppMode>(),
+            ctx.data_unchecked::<DbPool>(),
         )?;
         let token = ctx
             .data_opt::<Token>()
@@ -159,10 +154,9 @@ impl AccountMutation {
         new_email: String,
         verify_code: String,
     ) -> Result<OpRes> {
-        let app_mode = ctx.data_unchecked::<AppMode>();
         let db_conn = &mut tools_lib_db::pg::connection::get_connection(
-            &app_mode,
-            &ctx.data_unchecked::<DbPool>(),
+            ctx.data_unchecked::<AppMode>(),
+            ctx.data_unchecked::<DbPool>(),
         )?;
 
         let mut client =
@@ -186,10 +180,9 @@ impl AccountMutation {
         old_password: String,
         new_password: String,
     ) -> Result<OpRes> {
-        let app_mode = ctx.data_unchecked::<AppMode>();
         let db_conn = &mut tools_lib_db::pg::connection::get_connection(
-            &app_mode,
-            &ctx.data_unchecked::<DbPool>(),
+            ctx.data_unchecked::<AppMode>(),
+            ctx.data_unchecked::<DbPool>(),
         )?;
         let token = ctx
             .data_opt::<Token>()
@@ -214,10 +207,9 @@ impl AccountMutation {
     }
 
     async fn request_reset_password<'a>(&self, ctx: &Context<'a>, email: String) -> Result<OpRes> {
-        let app_mode = ctx.data_unchecked::<AppMode>();
         let db_conn = &mut tools_lib_db::pg::connection::get_connection(
-            &app_mode,
-            &ctx.data_unchecked::<DbPool>(),
+            ctx.data_unchecked::<AppMode>(),
+            ctx.data_unchecked::<DbPool>(),
         )?;
 
         let mut client =
@@ -240,10 +232,9 @@ impl AccountMutation {
         email: String,
         verify_code: String,
     ) -> Result<OpRes> {
-        let app_mode = ctx.data_unchecked::<AppMode>();
         let db_conn = &mut tools_lib_db::pg::connection::get_connection(
-            &app_mode,
-            &ctx.data_unchecked::<DbPool>(),
+            ctx.data_unchecked::<AppMode>(),
+            ctx.data_unchecked::<DbPool>(),
         )?;
 
         let mut client =
@@ -267,10 +258,9 @@ impl AccountMutation {
         verify_code: String,
         new_password: String,
     ) -> Result<OpRes> {
-        let app_mode = ctx.data_unchecked::<AppMode>();
         let db_conn = &mut tools_lib_db::pg::connection::get_connection(
-            &app_mode,
-            &ctx.data_unchecked::<DbPool>(),
+            ctx.data_unchecked::<AppMode>(),
+            ctx.data_unchecked::<DbPool>(),
         )?;
 
         let mut client =
@@ -290,10 +280,9 @@ impl AccountMutation {
     }
 
     async fn delete_account<'a>(&self, ctx: &Context<'a>) -> Result<OpRes> {
-        let app_mode = ctx.data_unchecked::<AppMode>();
         let db_conn = &mut tools_lib_db::pg::connection::get_connection(
-            &app_mode,
-            &ctx.data_unchecked::<DbPool>(),
+            ctx.data_unchecked::<AppMode>(),
+            ctx.data_unchecked::<DbPool>(),
         )?;
         let token = ctx
             .data_opt::<Token>()
