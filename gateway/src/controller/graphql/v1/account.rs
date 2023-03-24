@@ -7,7 +7,10 @@ use tools_lib_db::pg::connection::DbPool;
 use uuid::Uuid;
 
 use crate::{
-    contract::graphql::{account::Account, op_res::OpRes, sign_in_result::SignInResult},
+    contract::graphql::{
+        account::{Account, SignInResult},
+        op_res::OpRes,
+    },
     dto::token::Token,
     env::AppMode,
     service,

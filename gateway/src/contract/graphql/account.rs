@@ -26,3 +26,14 @@ impl Account {
         &self.updated_at
     }
 }
+
+pub struct SignInResult {
+    pub token: String,
+}
+
+#[Object]
+impl SignInResult {
+    async fn token(&self) -> &str {
+        &self.token
+    }
+}

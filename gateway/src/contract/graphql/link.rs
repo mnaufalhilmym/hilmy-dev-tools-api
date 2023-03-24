@@ -41,3 +41,35 @@ impl Link {
         &self.updated_at
     }
 }
+
+pub struct GetLinkByShortUrlRes {
+    pub short_url: String,
+    pub long_url: String,
+}
+
+#[Object]
+impl GetLinkByShortUrlRes {
+    async fn short_url(&self) -> &str {
+        &self.short_url
+    }
+
+    async fn long_url(&self) -> &str {
+        &self.long_url
+    }
+}
+
+pub struct VisitLinkRes {
+    pub short_url: String,
+    pub long_url: String,
+}
+
+#[Object]
+impl VisitLinkRes {
+    async fn short_url(&self) -> &str {
+        &self.short_url
+    }
+
+    async fn long_url(&self) -> &str {
+        &self.long_url
+    }
+}

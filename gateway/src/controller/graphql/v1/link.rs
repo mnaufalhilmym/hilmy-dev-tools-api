@@ -7,7 +7,10 @@ use tools_link::proto::link::LinkServiceClient;
 use uuid::Uuid;
 
 use crate::{
-    contract::graphql::{link::Link, op_res::OpRes},
+    contract::graphql::{
+        link::{GetLinkByShortUrlRes, Link, VisitLinkRes},
+        op_res::OpRes,
+    },
     dto::token::Token,
     env::AppMode,
     helper::get_account_id,
@@ -89,7 +92,31 @@ impl LinkQuery {
         })
     }
 
-    async fn visit_link<'a>(&self, ctx: &Context<'a>, short_url: String) -> Result<Link> {
+    async fn link_by_short_url<'a>(
+        &self,
+        ctx: &Context<'a>,
+        short_url: String,
+    ) -> Result<GetLinkByShortUrlRes> {
+        let db_conn = &mut tools_lib_db::pg::connection::get_connection(
+            ctx.data_unchecked::<AppMode>(),
+            ctx.data_unchecked::<DbPool>(),
+        )?;
+
+        let mut client = LinkServiceClient::new(service::grpc::client::get(db_conn, "link").await?);
+
+        let res = client
+            .get_link_by_short_url(Request::new(
+                tools_link::proto::link::GetLinkByShortUrlReq { short_url },
+            ))
+            .await?;
+
+        Ok(GetLinkByShortUrlRes {
+            short_url: res.get_ref().short_url.to_owned(),
+            long_url: res.get_ref().long_url.to_owned(),
+        })
+    }
+
+    async fn visit_link<'a>(&self, ctx: &Context<'a>, short_url: String) -> Result<VisitLinkRes> {
         let db_conn = &mut tools_lib_db::pg::connection::get_connection(
             ctx.data_unchecked::<AppMode>(),
             ctx.data_unchecked::<DbPool>(),
@@ -103,14 +130,9 @@ impl LinkQuery {
             }))
             .await?;
 
-        Ok(Link {
-            id: Uuid::from_str(&res.get_ref().id)?,
-            title: res.get_ref().title.to_owned(),
+        Ok(VisitLinkRes {
             short_url: res.get_ref().short_url.to_owned(),
             long_url: res.get_ref().long_url.to_owned(),
-            visits: res.get_ref().visits,
-            created_at: res.get_ref().created_at.to_owned(),
-            updated_at: res.get_ref().updated_at.to_owned(),
         })
     }
 }
