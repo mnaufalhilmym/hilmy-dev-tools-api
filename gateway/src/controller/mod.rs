@@ -1,22 +1,24 @@
 use actix_web::{web, HttpResponse, Result};
 use actix_web_httpauth::extractors::bearer::BearerAuth;
-use async_graphql::{http::GraphiQLSource, EmptySubscription, Schema};
+use async_graphql::http::GraphiQLSource;
 use async_graphql_actix_web::{GraphQLRequest, GraphQLResponse};
-use tools_lib_db::pg::connection::DbPool;
 
 use crate::{
     dto::token::Token,
-    env::{self, AppMode},
+    env::{AppMode, AppName, ServiceName},
+    gql_schema::schema::GqlSchema,
 };
 
-use self::graphql::v1::{MutationRootV1, QueryRootV1};
+pub mod graphql;
 
-mod graphql;
-
-async fn root() -> Result<HttpResponse> {
-    let app_name = &env::Env::app_name();
-    let app_mode = &env::Env::app_mode();
-    let service_name = &env::Env::service_name();
+async fn root(
+    app_name: web::Data<AppName>,
+    app_mode: web::Data<AppMode>,
+    service_name: web::Data<ServiceName>,
+) -> Result<HttpResponse> {
+    let app_name = app_name.as_str();
+    let app_mode = app_mode.as_str();
+    let service_name = service_name.as_str();
 
     Ok(HttpResponse::Ok().body(format!(
         "{app_name} {service_name} is running in {app_mode}."
@@ -24,7 +26,7 @@ async fn root() -> Result<HttpResponse> {
 }
 
 async fn graphql_v1(
-    schema: web::Data<Schema<QueryRootV1, MutationRootV1, EmptySubscription>>,
+    schema: web::Data<GqlSchema>,
     auth: Option<BearerAuth>,
     req: GraphQLRequest,
 ) -> GraphQLResponse {
@@ -37,8 +39,8 @@ async fn graphql_v1(
     schema.execute(req).await.into()
 }
 
-async fn graphiql_v1() -> Result<HttpResponse> {
-    let app_mode = &env::Env::app_mode();
+async fn graphiql_v1(app_mode: web::Data<AppMode>) -> Result<HttpResponse> {
+    let app_mode = app_mode.as_str();
     if app_mode == "DEBUG" {
         Ok(HttpResponse::Ok().body(GraphiQLSource::build().endpoint("/graphql/v1").finish()))
     } else {
@@ -47,32 +49,35 @@ async fn graphiql_v1() -> Result<HttpResponse> {
 }
 
 pub struct CtxData {
+    pub app_name: AppName,
     pub app_mode: AppMode,
-    pub db_pool: DbPool,
+    pub service_name: ServiceName,
+    pub gql_schema: GqlSchema,
 }
 
 pub fn register(cfg: &mut web::ServiceConfig, data: CtxData) {
     // register / path
-    cfg.route("/", web::get().to(root));
+    cfg.service(
+        web::scope("/")
+            .app_data(web::Data::new(data.app_name))
+            .app_data(web::Data::new(data.app_mode.to_owned()))
+            .app_data(web::Data::new(data.service_name))
+            .route("", web::get().to(root)),
+    );
 
     // register /graphql path
     cfg.service(
         web::scope("/graphql").service(
             web::scope("/v1")
-                .app_data(web::Data::new(
-                    Schema::build(
-                        QueryRootV1::default(),
-                        MutationRootV1::default(),
-                        EmptySubscription,
-                    )
-                    .data(data.app_mode)
-                    .data(data.db_pool)
-                    .finish(),
-                ))
+                .app_data(web::Data::new(data.gql_schema))
                 .route("", web::post().to(graphql_v1)),
         ),
     );
 
     // register /graphiql
-    cfg.service(web::scope("/graphiql").route("/v1", web::get().to(graphiql_v1)));
+    cfg.service(
+        web::scope("/graphiql")
+            .app_data(web::Data::new(data.app_mode))
+            .route("/v1", web::get().to(graphiql_v1)),
+    );
 }

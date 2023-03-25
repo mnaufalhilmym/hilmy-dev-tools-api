@@ -1,0 +1,134 @@
+type Account {
+	id: UUID!
+	email: String!
+	createdAt: String!
+	updatedAt: String!
+}
+
+type Apprepo {
+	id: UUID!
+	name: String!
+	icon: String!
+	link: String!
+	createdAt: String!
+	updatedAt: String!
+}
+
+
+
+type GetLinkByShortUrlRes {
+	shortUrl: String!
+	longUrl: String!
+}
+
+
+
+type Link {
+	id: UUID!
+	title: String!
+	shortUrl: String!
+	longUrl: String!
+	visits: Int!
+	createdAt: String!
+	updatedAt: String!
+}
+
+type MutationRootV1 {
+	createServiceInfo(name: String!): ServiceInfo!
+	updateServiceInfo(id: UUID!, name: String!): ServiceInfo!
+	deleteServiceInfo(id: UUID!): OpRes!
+	createServiceAddress(serviceId: UUID!, address: String!): ServiceAddress!
+	updateServiceAddress(id: UUID!, serviceId: UUID, address: String, status: ServiceAddressStatus): ServiceAddress!
+	deleteServiceAddress(id: UUID!): OpRes!
+	signUp(email: String!, password: String!): OpRes!
+	verifySignUp(email: String!, verifyCode: String!): OpRes!
+	signIn(email: String!, password: String!): SignInResult!
+	changeEmail(newEmail: String!): OpRes!
+	verifyChangeEmail(newEmail: String!, verifyCode: String!): OpRes!
+	changePassword(oldPassword: String!, newPassword: String!): OpRes!
+	requestResetPassword(email: String!): OpRes!
+	verifyRequestResetPassword(email: String!, verifyCode: String!): OpRes!
+	resetPassword(email: String!, verifyCode: String!, newPassword: String!): OpRes!
+	deleteAccount: OpRes!
+	createLink(title: String!, shortUrl: String!, longUrl: String!): Link!
+	updateLink(id: UUID!, title: String, shortUrl: String, longUrl: String): Link!
+	deleteLink(id: UUID!): OpRes!
+	createApprepo(name: String!, icon: String!, link: String!): Apprepo!
+	updateApprepo(id: UUID!, name: String, icon: String, link: String): Apprepo!
+	deleteApprepo(id: UUID!): OpRes!
+}
+
+"""
+ISO 8601 combined date and time without timezone.
+
+# Examples
+
+* `2015-07-01T08:59:60.123`,
+"""
+scalar NaiveDateTime
+
+type OpRes {
+	isSuccess: Boolean!
+}
+
+type QueryRootV1 {
+	servicesInfo(name: String): [ServiceInfo!]!
+	serviceInfo(id: UUID!): ServiceInfo!
+	servicesAddress(serviceId: UUID): [ServiceAddress!]!
+	serviceAddress(id: UUID!): ServiceAddress!
+	account: Account!
+	links: [Link!]!
+	link(id: UUID!): Link!
+	linkByShortUrl(shortUrl: String!): GetLinkByShortUrlRes!
+	visitLink(shortUrl: String!): VisitLinkRes!
+	apprepos: [Apprepo!]!
+}
+
+type ServiceAddress {
+	id: UUID!
+	serviceId: UUID!
+	address: String!
+	status: ServiceAddressStatus!
+	lastUsedAt: NaiveDateTime!
+	createdAt: NaiveDateTime!
+	updatedAt: NaiveDateTime!
+}
+
+enum ServiceAddressStatus {
+	ACCESSIBLE
+	INACCESSIBLE
+}
+
+type ServiceInfo {
+	id: UUID!
+	name: String!
+	createdAt: NaiveDateTime!
+	updatedAt: NaiveDateTime!
+}
+
+type SignInResult {
+	token: String!
+}
+
+
+"""
+A UUID is a unique 128-bit number, stored as 16 octets. UUIDs are parsed as
+Strings within GraphQL. UUIDs are used to assign unique identifiers to
+entities without requiring a central allocating authority.
+
+# References
+
+* [Wikipedia: Universally Unique Identifier](http://en.wikipedia.org/wiki/Universally_unique_identifier)
+* [RFC4122: A Universally Unique IDentifier (UUID) URN Namespace](http://tools.ietf.org/html/rfc4122)
+"""
+scalar UUID
+
+type VisitLinkRes {
+	shortUrl: String!
+	longUrl: String!
+}
+
+schema {
+	query: QueryRootV1
+	mutation: MutationRootV1
+}

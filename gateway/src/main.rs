@@ -1,16 +1,23 @@
-use std::io::{Error, ErrorKind, Result};
+use std::{
+    fs,
+    io::{Error, ErrorKind, Result},
+};
 
 use actix_cors::Cors;
 use actix_web::{middleware::Logger, web::ServiceConfig, App, HttpServer};
 use controller::register;
 use diesel_migrations::{embed_migrations, EmbeddedMigrations};
 
-use crate::{controller::CtxData, env::AppMode};
+use crate::{
+    controller::CtxData,
+    env::{AppMode, AppName, ServiceName},
+};
 
 mod contract;
 mod controller;
 mod dto;
 mod env;
+mod gql_schema;
 mod helper;
 mod model;
 mod schema;
@@ -33,6 +40,17 @@ async fn main() -> Result<()> {
         return Err(Error::new(ErrorKind::Other, e));
     };
 
+    let gql_schema = gql_schema::schema::build_gql_schema(gql_schema::schema::GqlData {
+        app_mode: app_mode.to_owned(),
+        db_pool,
+    });
+    if app_mode == "DEBUG" {
+        fs::write(
+            "/app/gateway/schema/gateway.schema.graphql",
+            &gql_schema.sdl(),
+        )?;
+    }
+
     println!("{app_name} {service_name} is running on {service_addrs} in {app_mode}.");
 
     HttpServer::new(move || {
@@ -49,8 +67,10 @@ async fn main() -> Result<()> {
                 register(
                     service_config,
                     CtxData {
+                        app_name: AppName::from(app_name.to_owned()),
                         app_mode: AppMode::from(app_mode.to_owned()),
-                        db_pool: db_pool.to_owned(),
+                        service_name: ServiceName::from(service_name.to_owned()),
+                        gql_schema: gql_schema.to_owned(),
                     },
                 )
             })

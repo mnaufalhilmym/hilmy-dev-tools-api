@@ -19,11 +19,11 @@ impl Env {
         env::var("SERVICE_ADDRS").unwrap()
     }
 
-    pub fn database_url() -> String {
-        env::var("DATABASE_URL").unwrap()
+    pub fn service_gql_addrs() -> String {
+        env::var("SERVICE_GQL_ADDRS").unwrap()
+    }
+
+    pub fn site_link_url() -> String {
+        env::var("SITE_LINK_URL").unwrap()
     }
 }
-
-pub type AppMode = String;
-pub type AppName = String;
-pub type ServiceName = String;
