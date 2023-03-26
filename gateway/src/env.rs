@@ -4,16 +4,16 @@ use std::env;
 pub struct Env;
 
 impl Env {
-    pub fn app_name() -> String {
-        env::var("APP_NAME").unwrap()
+    pub fn app_name() -> AppName {
+        AppName(env::var("APP_NAME").unwrap())
     }
 
-    pub fn app_mode() -> String {
-        env::var("APP_MODE").unwrap()
+    pub fn app_mode() -> AppMode {
+        AppMode(env::var("APP_MODE").unwrap())
     }
 
-    pub fn service_name() -> String {
-        env::var("SERVICE_NAME").unwrap()
+    pub fn service_name() -> ServiceName {
+        ServiceName(env::var("SERVICE_NAME").unwrap())
     }
 
     pub fn service_addrs() -> String {
@@ -29,12 +29,42 @@ impl Env {
     }
 }
 
-pub type AppName = String;
-pub type ServiceName = String;
 pub type GrpcConnectTimeout = u64;
 
+#[derive(Clone)]
+pub struct AppName(String);
+
+impl fmt::Display for AppName {
+    #[inline]
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        fmt::Display::fmt(&*self.0, f)
+    }
+}
+
+impl AppName {
+    pub fn as_str(&self) -> &str {
+        &self.0
+    }
+}
+
+#[derive(Clone)]
+pub struct ServiceName(String);
+
+impl fmt::Display for ServiceName {
+    #[inline]
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        fmt::Display::fmt(&*self.0, f)
+    }
+}
+
+impl ServiceName {
+    pub fn as_str(&self) -> &str {
+        &self.0
+    }
+}
+
 #[derive(PartialEq, Clone)]
-pub struct AppMode(pub String);
+pub struct AppMode(String);
 
 impl fmt::Display for AppMode {
     #[inline]
@@ -44,10 +74,6 @@ impl fmt::Display for AppMode {
 }
 
 impl AppMode {
-    pub fn from(v: String) -> Self {
-        AppMode(v)
-    }
-
     pub fn as_str(&self) -> &str {
         &self.0
     }

@@ -8,10 +8,7 @@ use actix_web::{middleware::Logger, web::ServiceConfig, App, HttpServer};
 use controller::register;
 use diesel_migrations::{embed_migrations, EmbeddedMigrations};
 
-use crate::{
-    controller::CtxData,
-    env::{AppMode, AppName, ServiceName},
-};
+use crate::controller::CtxData;
 
 mod contract;
 mod controller;
@@ -27,9 +24,9 @@ const MIGRATIONS: EmbeddedMigrations = embed_migrations!("./migrations");
 
 #[actix_web::main]
 async fn main() -> Result<()> {
-    let app_name = AppName::from(env::Env::app_name());
-    let app_mode = AppMode::from(env::Env::app_mode());
-    let service_name = ServiceName::from(env::Env::service_name());
+    let app_name = env::Env::app_name();
+    let app_mode = env::Env::app_mode();
+    let service_name = env::Env::service_name();
     let service_addrs = env::Env::service_addrs();
     let database_url = env::Env::database_url();
     let grpc_connect_timeout = env::Env::grpc_connect_timeout();
