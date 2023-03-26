@@ -9,9 +9,11 @@ use crate::service;
 pub async fn is_admin(
     db_conn: &mut DbPooled,
     token: String,
+    grpc_connect_timeout: &u64,
 ) -> Result<bool, Box<dyn Error + Send + Sync>> {
-    let mut client =
-        AccountServiceClient::new(service::grpc::client::get(db_conn, "account").await?);
+    let mut client = AccountServiceClient::new(
+        service::grpc::client::get(db_conn, "account", grpc_connect_timeout).await?,
+    );
     let account_role = client
         .validate_token(Request::new(
             tools_account::proto::account::ValidateTokenReq { token },

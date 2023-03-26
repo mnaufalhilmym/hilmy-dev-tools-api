@@ -9,9 +9,11 @@ use crate::service;
 pub async fn get_account_id(
     db_conn: &mut DbPooled,
     token: String,
+    grpc_connect_timeout: &u64,
 ) -> Result<String, Box<dyn Error + Send + Sync>> {
-    let mut client =
-        AccountServiceClient::new(service::grpc::client::get(db_conn, "account").await?);
+    let mut client = AccountServiceClient::new(
+        service::grpc::client::get(db_conn, "account", grpc_connect_timeout).await?,
+    );
 
     Ok(client
         .validate_token(Request::new(

@@ -1,0 +1,22 @@
+FROM rust:1.68-slim-bullseye AS base-builder
+RUN apt update && apt install -y pkg-config libssl-dev cmake g++ protobuf-compiler libpq-dev
+WORKDIR /app
+COPY ./account/Cargo.toml ./account/
+COPY ./mailer/Cargo.toml ./mailer/
+COPY ./lib/db/Cargo.toml ./lib/db/
+RUN cd account && mkdir src && touch src/lib.rs
+RUN cd mailer && mkdir src && touch src/lib.rs
+RUN cd lib/db && mkdir src && touch src/lib.rs
+WORKDIR /app/account
+RUN cargo build --release
+
+FROM base-builder AS builder
+WORKDIR /app
+COPY . .
+RUN cargo build --release --bin tools-account
+
+FROM debian:bullseye-slim AS runner
+RUN apt update && apt install -y libpq-dev
+WORKDIR /app
+COPY --from=builder /app/target/release/tools-account .
+CMD ./tools-account

@@ -38,4 +38,8 @@ impl Env {
     pub fn kafka_addrs() -> String {
         env::var("KAFKA_ADDRS").unwrap()
     }
+
+    pub fn kafka_msg_timeout() -> String {
+        env::var("KAFKA_MSG_TIMEOUT").unwrap()
+    }
 }

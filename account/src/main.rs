@@ -27,6 +27,7 @@ async fn main() -> Result<(), Box<dyn Error + Send + Sync>> {
     let argon2_hash_secret = env::Env::argon2_hash_secret();
     let jwt_secret = env::Env::jwt_secret();
     let kafka_addrs = env::Env::kafka_addrs();
+    let kafka_msg_timeout = env::Env::kafka_msg_timeout();
 
     let db_pool = tools_lib_db::pg::connection::create_connection_pool(&database_url);
     let db_conn = &mut tools_lib_db::pg::connection::get_connection(&app_mode, &db_pool).unwrap();
@@ -36,7 +37,7 @@ async fn main() -> Result<(), Box<dyn Error + Send + Sync>> {
 
     let kafka_producer = ClientConfig::new()
         .set("bootstrap.servers", &kafka_addrs)
-        .set("message.timeout.ms", "1000")
+        .set("message.timeout.ms", &kafka_msg_timeout)
         .create()?;
 
     println!("{app_name} {service_name} is running on {service_addrs} in {app_mode}.");

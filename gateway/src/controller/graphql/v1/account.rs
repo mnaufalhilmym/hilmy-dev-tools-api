@@ -12,7 +12,7 @@ use crate::{
         op_res::OpRes,
     },
     dto::token::Token,
-    env::AppMode,
+    env::{AppMode, GrpcConnectTimeout},
     service,
 };
 
@@ -23,17 +23,19 @@ pub struct AccountQuery;
 impl AccountQuery {
     async fn account<'a>(&self, ctx: &Context<'a>) -> Result<Account> {
         let db_conn = &mut tools_lib_db::pg::connection::get_connection(
-            ctx.data_unchecked::<AppMode>(),
+            ctx.data_unchecked::<AppMode>().as_str(),
             ctx.data_unchecked::<DbPool>(),
         )?;
+        let grpc_connect_timeout = ctx.data_unchecked::<GrpcConnectTimeout>();
         let token = ctx
             .data_opt::<Token>()
             .ok_or("Token doesn't exist")?
             .0
             .to_owned();
 
-        let mut client =
-            AccountServiceClient::new(service::grpc::client::get(db_conn, "account").await?);
+        let mut client = AccountServiceClient::new(
+            service::grpc::client::get(db_conn, "account", grpc_connect_timeout).await?,
+        );
 
         let res = client
             .get_account(Request::new(proto::account::GetAccountReq { token }))
@@ -60,12 +62,14 @@ impl AccountMutation {
         password: String,
     ) -> Result<OpRes> {
         let db_conn = &mut tools_lib_db::pg::connection::get_connection(
-            ctx.data_unchecked::<AppMode>(),
+            ctx.data_unchecked::<AppMode>().as_str(),
             ctx.data_unchecked::<DbPool>(),
         )?;
+        let grpc_connect_timeout = ctx.data_unchecked::<GrpcConnectTimeout>();
 
-        let mut client =
-            AccountServiceClient::new(service::grpc::client::get(db_conn, "account").await?);
+        let mut client = AccountServiceClient::new(
+            service::grpc::client::get(db_conn, "account", grpc_connect_timeout).await?,
+        );
 
         let res = client
             .sign_up(Request::new(proto::account::SignUpReq { email, password }))
@@ -83,12 +87,14 @@ impl AccountMutation {
         verify_code: String,
     ) -> Result<OpRes> {
         let db_conn = &mut tools_lib_db::pg::connection::get_connection(
-            ctx.data_unchecked::<AppMode>(),
+            ctx.data_unchecked::<AppMode>().as_str(),
             ctx.data_unchecked::<DbPool>(),
         )?;
+        let grpc_connect_timeout = ctx.data_unchecked::<GrpcConnectTimeout>();
 
-        let mut client =
-            AccountServiceClient::new(service::grpc::client::get(db_conn, "account").await?);
+        let mut client = AccountServiceClient::new(
+            service::grpc::client::get(db_conn, "account", grpc_connect_timeout).await?,
+        );
 
         let res = client
             .verify_sign_up(Request::new(proto::account::VerifySignUpReq {
@@ -109,12 +115,14 @@ impl AccountMutation {
         password: String,
     ) -> Result<SignInResult> {
         let db_conn = &mut tools_lib_db::pg::connection::get_connection(
-            ctx.data_unchecked::<AppMode>(),
+            ctx.data_unchecked::<AppMode>().as_str(),
             ctx.data_unchecked::<DbPool>(),
         )?;
+        let grpc_connect_timeout = ctx.data_unchecked::<GrpcConnectTimeout>();
 
-        let mut client =
-            AccountServiceClient::new(service::grpc::client::get(db_conn, "account").await?);
+        let mut client = AccountServiceClient::new(
+            service::grpc::client::get(db_conn, "account", grpc_connect_timeout).await?,
+        );
 
         let res = client
             .sign_in(Request::new(proto::account::SignInReq { email, password }))
@@ -127,17 +135,19 @@ impl AccountMutation {
 
     async fn change_email<'a>(&self, ctx: &Context<'a>, new_email: String) -> Result<OpRes> {
         let db_conn = &mut tools_lib_db::pg::connection::get_connection(
-            ctx.data_unchecked::<AppMode>(),
+            ctx.data_unchecked::<AppMode>().as_str(),
             ctx.data_unchecked::<DbPool>(),
         )?;
+        let grpc_connect_timeout = ctx.data_unchecked::<GrpcConnectTimeout>();
         let token = ctx
             .data_opt::<Token>()
             .ok_or("Token doesn't exist")?
             .0
             .to_owned();
 
-        let mut client =
-            AccountServiceClient::new(service::grpc::client::get(db_conn, "account").await?);
+        let mut client = AccountServiceClient::new(
+            service::grpc::client::get(db_conn, "account", grpc_connect_timeout).await?,
+        );
 
         let res = client
             .change_email(Request::new(proto::account::ChangeEmailReq {
@@ -158,12 +168,14 @@ impl AccountMutation {
         verify_code: String,
     ) -> Result<OpRes> {
         let db_conn = &mut tools_lib_db::pg::connection::get_connection(
-            ctx.data_unchecked::<AppMode>(),
+            ctx.data_unchecked::<AppMode>().as_str(),
             ctx.data_unchecked::<DbPool>(),
         )?;
+        let grpc_connect_timeout = ctx.data_unchecked::<GrpcConnectTimeout>();
 
-        let mut client =
-            AccountServiceClient::new(service::grpc::client::get(db_conn, "account").await?);
+        let mut client = AccountServiceClient::new(
+            service::grpc::client::get(db_conn, "account", grpc_connect_timeout).await?,
+        );
 
         let res = client
             .verify_change_email(Request::new(proto::account::VerifyChangeEmailReq {
@@ -184,17 +196,19 @@ impl AccountMutation {
         new_password: String,
     ) -> Result<OpRes> {
         let db_conn = &mut tools_lib_db::pg::connection::get_connection(
-            ctx.data_unchecked::<AppMode>(),
+            ctx.data_unchecked::<AppMode>().as_str(),
             ctx.data_unchecked::<DbPool>(),
         )?;
+        let grpc_connect_timeout = ctx.data_unchecked::<GrpcConnectTimeout>();
         let token = ctx
             .data_opt::<Token>()
             .ok_or("Token doesn't exist")?
             .0
             .to_owned();
 
-        let mut client =
-            AccountServiceClient::new(service::grpc::client::get(db_conn, "account").await?);
+        let mut client = AccountServiceClient::new(
+            service::grpc::client::get(db_conn, "account", grpc_connect_timeout).await?,
+        );
 
         let res = client
             .change_password(Request::new(proto::account::ChangePasswordReq {
@@ -211,12 +225,14 @@ impl AccountMutation {
 
     async fn request_reset_password<'a>(&self, ctx: &Context<'a>, email: String) -> Result<OpRes> {
         let db_conn = &mut tools_lib_db::pg::connection::get_connection(
-            ctx.data_unchecked::<AppMode>(),
+            ctx.data_unchecked::<AppMode>().as_str(),
             ctx.data_unchecked::<DbPool>(),
         )?;
+        let grpc_connect_timeout = ctx.data_unchecked::<GrpcConnectTimeout>();
 
-        let mut client =
-            AccountServiceClient::new(service::grpc::client::get(db_conn, "account").await?);
+        let mut client = AccountServiceClient::new(
+            service::grpc::client::get(db_conn, "account", grpc_connect_timeout).await?,
+        );
 
         let res = client
             .request_reset_password(Request::new(proto::account::RequestResetPasswordReq {
@@ -236,12 +252,14 @@ impl AccountMutation {
         verify_code: String,
     ) -> Result<OpRes> {
         let db_conn = &mut tools_lib_db::pg::connection::get_connection(
-            ctx.data_unchecked::<AppMode>(),
+            ctx.data_unchecked::<AppMode>().as_str(),
             ctx.data_unchecked::<DbPool>(),
         )?;
+        let grpc_connect_timeout = ctx.data_unchecked::<GrpcConnectTimeout>();
 
-        let mut client =
-            AccountServiceClient::new(service::grpc::client::get(db_conn, "account").await?);
+        let mut client = AccountServiceClient::new(
+            service::grpc::client::get(db_conn, "account", grpc_connect_timeout).await?,
+        );
 
         let res = client
             .verify_request_reset_password(Request::new(
@@ -262,12 +280,14 @@ impl AccountMutation {
         new_password: String,
     ) -> Result<OpRes> {
         let db_conn = &mut tools_lib_db::pg::connection::get_connection(
-            ctx.data_unchecked::<AppMode>(),
+            ctx.data_unchecked::<AppMode>().as_str(),
             ctx.data_unchecked::<DbPool>(),
         )?;
+        let grpc_connect_timeout = ctx.data_unchecked::<GrpcConnectTimeout>();
 
-        let mut client =
-            AccountServiceClient::new(service::grpc::client::get(db_conn, "account").await?);
+        let mut client = AccountServiceClient::new(
+            service::grpc::client::get(db_conn, "account", grpc_connect_timeout).await?,
+        );
 
         let res = client
             .reset_password(Request::new(proto::account::ResetPasswordReq {
@@ -284,17 +304,19 @@ impl AccountMutation {
 
     async fn delete_account<'a>(&self, ctx: &Context<'a>) -> Result<OpRes> {
         let db_conn = &mut tools_lib_db::pg::connection::get_connection(
-            ctx.data_unchecked::<AppMode>(),
+            ctx.data_unchecked::<AppMode>().as_str(),
             ctx.data_unchecked::<DbPool>(),
         )?;
+        let grpc_connect_timeout = ctx.data_unchecked::<GrpcConnectTimeout>();
         let token = ctx
             .data_opt::<Token>()
             .ok_or("Token doesn't exist")?
             .0
             .to_owned();
 
-        let mut client =
-            AccountServiceClient::new(service::grpc::client::get(db_conn, "account").await?);
+        let mut client = AccountServiceClient::new(
+            service::grpc::client::get(db_conn, "account", grpc_connect_timeout).await?,
+        );
 
         let res = client
             .delete_account(Request::new(proto::account::DeleteAccountReq { token }))

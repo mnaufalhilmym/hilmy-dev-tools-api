@@ -10,9 +10,12 @@ use crate::{
     schema,
 };
 
-pub async fn connect(service_address: &str) -> Result<Channel, Box<dyn Error + Send + Sync>> {
+pub async fn connect(
+    service_address: &str,
+    grpc_connect_timeout: &u64,
+) -> Result<Channel, Box<dyn Error + Send + Sync>> {
     match Channel::from_shared(service_address.to_owned())?
-        .connect_timeout(Duration::from_millis(500))
+        .connect_timeout(Duration::from_millis(*grpc_connect_timeout))
         .connect()
         .await
     {
@@ -24,6 +27,7 @@ pub async fn connect(service_address: &str) -> Result<Channel, Box<dyn Error + S
 pub async fn get(
     db_conn: &mut DbPooled,
     service_name: &str,
+    grpc_connect_timeout: &u64,
 ) -> Result<Channel, Box<dyn Error + Send + Sync>> {
     let service_addresses = schema::service_address::table
         .filter(schema::service_info::name.eq(&service_name))
@@ -47,7 +51,7 @@ pub async fn get(
     let mut used_service_address_id: Option<Uuid> = None;
 
     for (index, service_address) in service_addresses.iter().enumerate() {
-        channel = match connect(&service_address.1).await {
+        channel = match connect(&service_address.1, grpc_connect_timeout).await {
             Ok(client) => {
                 used_service_address_id = Some(service_address.0);
                 Some(client)

@@ -1,0 +1,17 @@
+FROM rust:1.68-slim-bullseye AS base-builder
+RUN apt update && apt install -y pkg-config libssl-dev
+WORKDIR /app
+COPY ./linkresolver/Cargo.toml ./linkresolver/
+RUN cd linkresolver && mkdir src && touch src/lib.rs
+WORKDIR /app/linkresolver
+RUN cargo build --release
+
+FROM base-builder AS builder
+WORKDIR /app
+COPY . .
+RUN cargo build --release --bin tools-linkresolver
+
+FROM debian:bullseye-slim AS runner
+WORKDIR /app
+COPY --from=builder /app/target/release/tools-linkresolver .
+CMD ./tools-linkresolver

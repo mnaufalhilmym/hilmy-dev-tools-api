@@ -6,7 +6,7 @@ use uuid::Uuid;
 use crate::{
     contract::graphql::{op_res::OpRes, service_info::ServiceInfo},
     dto::token::Token,
-    env::AppMode,
+    env::{AppMode, GrpcConnectTimeout},
     helper, model, schema,
 };
 
@@ -21,16 +21,17 @@ impl ServiceInfoQuery {
         name: Option<String>,
     ) -> Result<Vec<ServiceInfo>> {
         let db_conn = &mut tools_lib_db::pg::connection::get_connection(
-            ctx.data_unchecked::<AppMode>(),
+            ctx.data_unchecked::<AppMode>().as_str(),
             ctx.data_unchecked::<DbPool>(),
         )?;
+        let grpc_connect_timeout = ctx.data_unchecked::<GrpcConnectTimeout>();
         let token = ctx
             .data_opt::<Token>()
             .ok_or("Token doesn't exist")?
             .0
             .to_owned();
 
-        if !helper::is_admin(db_conn, token).await? {
+        if !helper::is_admin(db_conn, token, grpc_connect_timeout).await? {
             return Err("Forbidden".into());
         }
 
@@ -53,16 +54,17 @@ impl ServiceInfoQuery {
 
     async fn service_info<'a>(&self, ctx: &Context<'a>, id: Uuid) -> Result<ServiceInfo> {
         let db_conn = &mut tools_lib_db::pg::connection::get_connection(
-            ctx.data_unchecked::<AppMode>(),
+            ctx.data_unchecked::<AppMode>().as_str(),
             ctx.data_unchecked::<DbPool>(),
         )?;
+        let grpc_connect_timeout = ctx.data_unchecked::<GrpcConnectTimeout>();
         let token = ctx
             .data_opt::<Token>()
             .ok_or("Token doesn't exist")?
             .0
             .to_owned();
 
-        if !helper::is_admin(db_conn, token).await? {
+        if !helper::is_admin(db_conn, token, grpc_connect_timeout).await? {
             return Err("Forbidden".into());
         }
 
@@ -90,16 +92,17 @@ impl ServiceInfoMutation {
         name: String,
     ) -> Result<ServiceInfo> {
         let db_conn = &mut tools_lib_db::pg::connection::get_connection(
-            ctx.data_unchecked::<AppMode>(),
+            ctx.data_unchecked::<AppMode>().as_str(),
             ctx.data_unchecked::<DbPool>(),
         )?;
+        let grpc_connect_timeout = ctx.data_unchecked::<GrpcConnectTimeout>();
         let token = ctx
             .data_opt::<Token>()
             .ok_or("Token doesn't exist")?
             .0
             .to_owned();
 
-        if !helper::is_admin(db_conn, token).await? {
+        if !helper::is_admin(db_conn, token, grpc_connect_timeout).await? {
             return Err("Forbidden".into());
         }
 
@@ -122,16 +125,17 @@ impl ServiceInfoMutation {
         name: String,
     ) -> Result<ServiceInfo> {
         let db_conn = &mut tools_lib_db::pg::connection::get_connection(
-            ctx.data_unchecked::<AppMode>(),
+            ctx.data_unchecked::<AppMode>().as_str(),
             ctx.data_unchecked::<DbPool>(),
         )?;
+        let grpc_connect_timeout = ctx.data_unchecked::<GrpcConnectTimeout>();
         let token = ctx
             .data_opt::<Token>()
             .ok_or("Token doesn't exist")?
             .0
             .to_owned();
 
-        if !helper::is_admin(db_conn, token).await? {
+        if !helper::is_admin(db_conn, token, grpc_connect_timeout).await? {
             return Err("Forbidden".into());
         }
 
@@ -152,16 +156,17 @@ impl ServiceInfoMutation {
 
     async fn delete_service_info<'a>(&self, ctx: &Context<'a>, id: Uuid) -> Result<OpRes> {
         let db_conn = &mut tools_lib_db::pg::connection::get_connection(
-            ctx.data_unchecked::<AppMode>(),
+            ctx.data_unchecked::<AppMode>().as_str(),
             ctx.data_unchecked::<DbPool>(),
         )?;
+        let grpc_connect_timeout = ctx.data_unchecked::<GrpcConnectTimeout>();
         let token = ctx
             .data_opt::<Token>()
             .ok_or("Token doesn't exist")?
             .0
             .to_owned();
 
-        if !helper::is_admin(db_conn, token).await? {
+        if !helper::is_admin(db_conn, token, grpc_connect_timeout).await? {
             return Err("Forbidden".into());
         }
 

@@ -9,7 +9,7 @@ use uuid::Uuid;
 use crate::{
     contract::graphql::{apprepo::Apprepo, op_res::OpRes},
     dto::token::Token,
-    env::AppMode,
+    env::{AppMode, GrpcConnectTimeout},
     helper, service,
 };
 
@@ -20,12 +20,14 @@ pub struct ApprepoQuery;
 impl ApprepoQuery {
     async fn apprepos<'a>(&self, ctx: &Context<'a>) -> Result<Vec<Apprepo>> {
         let db_conn = &mut tools_lib_db::pg::connection::get_connection(
-            ctx.data_unchecked::<AppMode>(),
+            ctx.data_unchecked::<AppMode>().as_str(),
             ctx.data_unchecked::<DbPool>(),
         )?;
+        let grpc_connect_timeout = ctx.data_unchecked::<GrpcConnectTimeout>();
 
-        let mut client =
-            ApprepoServiceClient::new(service::grpc::client::get(db_conn, "apprepo").await?);
+        let mut client = ApprepoServiceClient::new(
+            service::grpc::client::get(db_conn, "apprepo", grpc_connect_timeout).await?,
+        );
 
         let res = client
             .get_apprepos(Request::new(proto::apprepo::GetAppreposReq {}))
@@ -60,21 +62,23 @@ impl ApprepoMutation {
         link: String,
     ) -> Result<Apprepo> {
         let db_conn = &mut tools_lib_db::pg::connection::get_connection(
-            ctx.data_unchecked::<AppMode>(),
+            ctx.data_unchecked::<AppMode>().as_str(),
             ctx.data_unchecked::<DbPool>(),
         )?;
+        let grpc_connect_timeout = ctx.data_unchecked::<GrpcConnectTimeout>();
         let token = ctx
             .data_opt::<Token>()
             .ok_or("Token doesn't exist")?
             .0
             .to_owned();
 
-        if !helper::is_admin(db_conn, token).await? {
+        if !helper::is_admin(db_conn, token, grpc_connect_timeout).await? {
             return Err("Forbidden".into());
         }
 
-        let mut client =
-            ApprepoServiceClient::new(service::grpc::client::get(db_conn, "apprepo").await?);
+        let mut client = ApprepoServiceClient::new(
+            service::grpc::client::get(db_conn, "apprepo", grpc_connect_timeout).await?,
+        );
 
         let res = client
             .create_apprepo(Request::new(proto::apprepo::CreateApprepoReq {
@@ -103,21 +107,23 @@ impl ApprepoMutation {
         link: Option<String>,
     ) -> Result<Apprepo> {
         let db_conn = &mut tools_lib_db::pg::connection::get_connection(
-            ctx.data_unchecked::<AppMode>(),
+            ctx.data_unchecked::<AppMode>().as_str(),
             ctx.data_unchecked::<DbPool>(),
         )?;
+        let grpc_connect_timeout = ctx.data_unchecked::<GrpcConnectTimeout>();
         let token = ctx
             .data_opt::<Token>()
             .ok_or("Token doesn't exist")?
             .0
             .to_owned();
 
-        if !helper::is_admin(db_conn, token).await? {
+        if !helper::is_admin(db_conn, token, grpc_connect_timeout).await? {
             return Err("Forbidden".into());
         }
 
-        let mut client =
-            ApprepoServiceClient::new(service::grpc::client::get(db_conn, "apprepo").await?);
+        let mut client = ApprepoServiceClient::new(
+            service::grpc::client::get(db_conn, "apprepo", grpc_connect_timeout).await?,
+        );
 
         let res = client
             .update_apprepo(Request::new(proto::apprepo::UpdateApprepoReq {
@@ -140,21 +146,23 @@ impl ApprepoMutation {
 
     async fn delete_apprepo<'a>(&self, ctx: &Context<'a>, id: Uuid) -> Result<OpRes> {
         let db_conn = &mut tools_lib_db::pg::connection::get_connection(
-            ctx.data_unchecked::<AppMode>(),
+            ctx.data_unchecked::<AppMode>().as_str(),
             ctx.data_unchecked::<DbPool>(),
         )?;
+        let grpc_connect_timeout = ctx.data_unchecked::<GrpcConnectTimeout>();
         let token = ctx
             .data_opt::<Token>()
             .ok_or("Token doesn't exist")?
             .0
             .to_owned();
 
-        if !helper::is_admin(db_conn, token).await? {
+        if !helper::is_admin(db_conn, token, grpc_connect_timeout).await? {
             return Err("Forbidden".into());
         }
 
-        let mut client =
-            ApprepoServiceClient::new(service::grpc::client::get(db_conn, "apprepo").await?);
+        let mut client = ApprepoServiceClient::new(
+            service::grpc::client::get(db_conn, "apprepo", grpc_connect_timeout).await?,
+        );
 
         let res = client
             .delete_apprepo(Request::new(proto::apprepo::DeleteApprepoReq {

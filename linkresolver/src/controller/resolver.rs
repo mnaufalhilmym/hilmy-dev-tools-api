@@ -31,8 +31,9 @@ pub async fn resolve_link(data: web::Data<AppData>, path: web::Path<String>) -> 
             .finish();
     }
 
+    let mut http_res = &mut HttpResponse::NotFound();
     if let Some(errors) = res.errors {
-        if app_mode != "DEBUG" {
+        if app_mode == "DEBUG" {
             let err = errors
                 .iter()
                 .map(|error| {
@@ -43,9 +44,8 @@ pub async fn resolve_link(data: web::Data<AppData>, path: web::Path<String>) -> 
                 })
                 .collect::<Vec<String>>()
                 .join(", ");
-            return HttpResponse::BadRequest().body(err);
+            http_res = http_res.insert_header(("LINK-ERRORS", err));
         }
     }
-
-    HttpResponse::NotFound().body(static_file::NOT_FOUND)
+    http_res.body(static_file::NOT_FOUND)
 }
