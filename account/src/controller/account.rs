@@ -33,7 +33,6 @@ impl AccountService for AccountController {
             &mut tools_lib_db::redis::connection::get_connection(&self.app_mode, &self.redis_pool)
                 .map_err(|e| Status::internal(e.to_string()))?;
         let (argon2, salt) = helper::argon2::new(&self.argon2_hash_secret.as_bytes());
-        let kafka_producer = &self.kafka_producer;
 
         // Check if email has been registered
         if schema::account::table
@@ -70,21 +69,37 @@ impl AccountService for AccountController {
             .map_err(|e| Status::internal(e.to_string()))?;
 
         // Send to mailer service
-        kafka_producer
-            .send_result(
-                FutureRecord::to("mailer").key(&data_key).payload(
-                    &serde_json::to_string(&[&tools_mailer::contract::MailReq {
-                        to: req.get_ref().email.to_owned(),
-                        subject: format!("Sign Up Verification Code - {verification_code}"),
-                        body: format!("Your sign up verification code is {verification_code}"),
-                    }])
-                    .map_err(|e| Status::internal(e.to_string()))?,
-                ),
-            )
-            .map_err(|e| Status::internal(e.0.to_string()))?
-            .await
-            .map_err(|e| Status::internal(e.to_string()))?
-            .map_err(|e| Status::internal(e.0.to_string()))?;
+        let mail_payload = serde_json::to_string(&[&tools_mailer::contract::MailReq {
+            to: req.get_ref().email.to_owned(),
+            subject: format!("Sign Up Verification Code - {verification_code}"),
+            body: format!("Your sign up verification code is {verification_code}"),
+        }])
+        .map_err(|e| Status::internal(e.to_string()))?;
+        if let Some(kafka_producer) = &self.kafka_producer {
+            kafka_producer
+                .send_result(
+                    FutureRecord::to("mailer")
+                        .key(&data_key)
+                        .payload(&mail_payload),
+                )
+                .map_err(|e| Status::internal(e.0.to_string()))?
+                .await
+                .map_err(|e| Status::internal(e.to_string()))?
+                .map_err(|e| Status::internal(e.0.to_string()))?;
+        } else if let Some(rabbitmq_channel) = &self.rabbitmq_channel {
+            rabbitmq_channel
+                .basic_publish(
+                    "",
+                    "mailer",
+                    lapin::options::BasicPublishOptions::default(),
+                    mail_payload.as_bytes(),
+                    lapin::BasicProperties::default(),
+                )
+                .await
+                .map_err(|e| Status::internal(e.to_string()))?
+                .await
+                .map_err(|e| Status::internal(e.to_string()))?;
+        }
 
         Ok(Response::new(proto::account::OpRes { is_success: true }))
     }
@@ -99,7 +114,6 @@ impl AccountService for AccountController {
         let redis_conn =
             &mut tools_lib_db::redis::connection::get_connection(&self.app_mode, &self.redis_pool)
                 .map_err(|e| Status::internal(e.to_string()))?;
-        let kafka_producer = &self.kafka_producer;
 
         // Create data key
         let data_key = format!("sign_up-{}", &req.get_ref().email);
@@ -131,21 +145,37 @@ impl AccountService for AccountController {
             .map_err(|e| Status::internal(e.to_string()))?;
 
         // Send to mailer service
-        kafka_producer
-            .send_result(
-                FutureRecord::to("mailer").key(&data_key).payload(
-                    &serde_json::to_string(&[&tools_mailer::contract::MailReq {
-                        to: req.get_ref().email.to_owned(),
-                        subject: "Sign Up Verification Complete".to_string(),
-                        body: "Your account is now verified.".to_string(),
-                    }])
-                    .map_err(|e| Status::internal(e.to_string()))?,
-                ),
-            )
-            .map_err(|e| Status::internal(e.0.to_string()))?
-            .await
-            .map_err(|e| Status::internal(e.to_string()))?
-            .map_err(|e| Status::internal(e.0.to_string()))?;
+        let mail_payload = serde_json::to_string(&[&tools_mailer::contract::MailReq {
+            to: req.get_ref().email.to_owned(),
+            subject: "Sign Up Verification Complete".to_string(),
+            body: "Your account is now verified.".to_string(),
+        }])
+        .map_err(|e| Status::internal(e.to_string()))?;
+        if let Some(kafka_producer) = &self.kafka_producer {
+            kafka_producer
+                .send_result(
+                    FutureRecord::to("mailer")
+                        .key(&data_key)
+                        .payload(&mail_payload),
+                )
+                .map_err(|e| Status::internal(e.0.to_string()))?
+                .await
+                .map_err(|e| Status::internal(e.to_string()))?
+                .map_err(|e| Status::internal(e.0.to_string()))?;
+        } else if let Some(rabbitmq_channel) = &self.rabbitmq_channel {
+            rabbitmq_channel
+                .basic_publish(
+                    "",
+                    "mailer",
+                    lapin::options::BasicPublishOptions::default(),
+                    mail_payload.as_bytes(),
+                    lapin::BasicProperties::default(),
+                )
+                .await
+                .map_err(|e| Status::internal(e.to_string()))?
+                .await
+                .map_err(|e| Status::internal(e.to_string()))?;
+        }
 
         Ok(Response::new(proto::account::OpRes { is_success: true }))
     }
@@ -200,7 +230,6 @@ impl AccountService for AccountController {
         let redis_conn =
             &mut tools_lib_db::redis::connection::get_connection(&self.app_mode, &self.redis_pool)
                 .map_err(|e| Status::internal(e.to_string()))?;
-        let kafka_producer = &self.kafka_producer;
         let jwt_secret = &self.jwt_secret;
 
         // Decode JWT Token
@@ -243,21 +272,37 @@ impl AccountService for AccountController {
             .map_err(|e| Status::internal(e.to_string()))?;
 
         // Send to mailer service
-        kafka_producer
-            .send_result(
-                FutureRecord::to("mailer").key(&data_key).payload(
-                    &serde_json::to_string(&[&tools_mailer::contract::MailReq {
-                        to: req.get_ref().new_email.to_owned(),
-                        subject: format!("Change Email Verification Code - {verification_code}"),
-                        body: format!("Your change email verification code is {verification_code}"),
-                    }])
-                    .map_err(|e| Status::internal(e.to_string()))?,
-                ),
-            )
-            .map_err(|e| Status::internal(e.0.to_string()))?
-            .await
-            .map_err(|e| Status::internal(e.to_string()))?
-            .map_err(|e| Status::internal(e.0.to_string()))?;
+        let mail_payload = serde_json::to_string(&[&tools_mailer::contract::MailReq {
+            to: req.get_ref().new_email.to_owned(),
+            subject: format!("Change Email Verification Code - {verification_code}"),
+            body: format!("Your change email verification code is {verification_code}"),
+        }])
+        .map_err(|e| Status::internal(e.to_string()))?;
+        if let Some(kafka_producer) = &self.kafka_producer {
+            kafka_producer
+                .send_result(
+                    FutureRecord::to("mailer")
+                        .key(&data_key)
+                        .payload(&mail_payload),
+                )
+                .map_err(|e| Status::internal(e.0.to_string()))?
+                .await
+                .map_err(|e| Status::internal(e.to_string()))?
+                .map_err(|e| Status::internal(e.0.to_string()))?;
+        } else if let Some(rabbitmq_channel) = &self.rabbitmq_channel {
+            rabbitmq_channel
+                .basic_publish(
+                    "",
+                    "mailer",
+                    lapin::options::BasicPublishOptions::default(),
+                    mail_payload.as_bytes(),
+                    lapin::BasicProperties::default(),
+                )
+                .await
+                .map_err(|e| Status::internal(e.to_string()))?
+                .await
+                .map_err(|e| Status::internal(e.to_string()))?;
+        }
 
         Ok(Response::new(proto::account::OpRes { is_success: true }))
     }
@@ -272,7 +317,6 @@ impl AccountService for AccountController {
         let redis_conn =
             &mut tools_lib_db::redis::connection::get_connection(&self.app_mode, &self.redis_pool)
                 .map_err(|e| Status::internal(e.to_string()))?;
-        let kafka_producer = &self.kafka_producer;
 
         // Create data key
         let data_key = format!("change_email-{}", &req.get_ref().new_email);
@@ -307,34 +351,50 @@ impl AccountService for AccountController {
         .map_err(|e| Status::internal(e.to_string()))?;
 
         // Send email notification change email
-        kafka_producer
-            .send_result(
-                FutureRecord::to("mailer").key(&data_key).payload(
-                    &serde_json::to_string(&[
-                        &tools_mailer::contract::MailReq {
-                            to: account_change_email.old_email.to_owned(),
-                            subject: "Change Email Verification Complete".to_string(),
-                            body: format!(
-                                "Your account email is now changed to {}.",
-                                &account_change_email.new_email
-                            ),
-                        },
-                        &tools_mailer::contract::MailReq {
-                            to: account_change_email.new_email.to_owned(),
-                            subject: "Change Email Verification Complete".to_string(),
-                            body: format!(
-                                "Your account email is now changed to {}.",
-                                &account_change_email.new_email
-                            ),
-                        },
-                    ])
-                    .map_err(|e| Status::internal(e.to_string()))?,
+        let mail_payload = serde_json::to_string(&[
+            &tools_mailer::contract::MailReq {
+                to: account_change_email.old_email.to_owned(),
+                subject: "Change Email Verification Complete".to_string(),
+                body: format!(
+                    "Your account email is now changed to {}.",
+                    &account_change_email.new_email
                 ),
-            )
-            .map_err(|e| Status::internal(e.0.to_string()))?
-            .await
-            .map_err(|e| Status::internal(e.to_string()))?
-            .map_err(|e| Status::internal(e.0.to_string()))?;
+            },
+            &tools_mailer::contract::MailReq {
+                to: account_change_email.new_email.to_owned(),
+                subject: "Change Email Verification Complete".to_string(),
+                body: format!(
+                    "Your account email is now changed to {}.",
+                    &account_change_email.new_email
+                ),
+            },
+        ])
+        .map_err(|e| Status::internal(e.to_string()))?;
+        if let Some(kafka_producer) = &self.kafka_producer {
+            kafka_producer
+                .send_result(
+                    FutureRecord::to("mailer")
+                        .key(&data_key)
+                        .payload(&mail_payload),
+                )
+                .map_err(|e| Status::internal(e.0.to_string()))?
+                .await
+                .map_err(|e| Status::internal(e.to_string()))?
+                .map_err(|e| Status::internal(e.0.to_string()))?;
+        } else if let Some(rabbitmq_channel) = &self.rabbitmq_channel {
+            rabbitmq_channel
+                .basic_publish(
+                    "",
+                    "mailer",
+                    lapin::options::BasicPublishOptions::default(),
+                    mail_payload.as_bytes(),
+                    lapin::BasicProperties::default(),
+                )
+                .await
+                .map_err(|e| Status::internal(e.to_string()))?
+                .await
+                .map_err(|e| Status::internal(e.to_string()))?;
+        }
 
         Ok(Response::new(proto::account::OpRes { is_success: true }))
     }
@@ -347,7 +407,6 @@ impl AccountService for AccountController {
             &mut tools_lib_db::pg::connection::get_connection(&self.app_mode, &self.db_pool)
                 .map_err(|e| Status::internal(e.to_string()))?;
         let (argon2, salt) = helper::argon2::new(&self.argon2_hash_secret.as_bytes());
-        let kafka_producer = &self.kafka_producer;
         let jwt_secret = &self.jwt_secret;
 
         // Decode JWT Token
@@ -400,23 +459,37 @@ impl AccountService for AccountController {
             .map_err(|e| Status::internal(e.to_string()))?;
 
         // Send email notification change email
-        kafka_producer
-            .send_result(
-                FutureRecord::to("mailer")
-                    .key(&format!("change_password-{}", &account_data.0))
-                    .payload(
-                        &serde_json::to_string(&[&tools_mailer::contract::MailReq {
-                            to: account_data.0.to_owned(),
-                            subject: "Change Password Success".to_string(),
-                            body: "Your account password is now changed".to_string(),
-                        }])
-                        .map_err(|e| Status::internal(e.to_string()))?,
-                    ),
-            )
-            .map_err(|e| Status::internal(e.0.to_string()))?
-            .await
-            .map_err(|e| Status::internal(e.to_string()))?
-            .map_err(|e| Status::internal(e.0.to_string()))?;
+        let mail_payload = serde_json::to_string(&[&tools_mailer::contract::MailReq {
+            to: account_data.0.to_owned(),
+            subject: "Change Password Success".to_string(),
+            body: "Your account password is now changed".to_string(),
+        }])
+        .map_err(|e| Status::internal(e.to_string()))?;
+        if let Some(kafka_producer) = &self.kafka_producer {
+            kafka_producer
+                .send_result(
+                    FutureRecord::to("mailer")
+                        .key(&format!("change_password-{}", &account_data.0))
+                        .payload(&mail_payload),
+                )
+                .map_err(|e| Status::internal(e.0.to_string()))?
+                .await
+                .map_err(|e| Status::internal(e.to_string()))?
+                .map_err(|e| Status::internal(e.0.to_string()))?;
+        } else if let Some(rabbitmq_channel) = &self.rabbitmq_channel {
+            rabbitmq_channel
+                .basic_publish(
+                    "",
+                    "mailer",
+                    lapin::options::BasicPublishOptions::default(),
+                    mail_payload.as_bytes(),
+                    lapin::BasicProperties::default(),
+                )
+                .await
+                .map_err(|e| Status::internal(e.to_string()))?
+                .await
+                .map_err(|e| Status::internal(e.to_string()))?;
+        }
 
         Ok(Response::new(proto::account::OpRes { is_success: true }))
     }
@@ -431,7 +504,6 @@ impl AccountService for AccountController {
         let redis_conn =
             &mut tools_lib_db::redis::connection::get_connection(&self.app_mode, &self.redis_pool)
                 .map_err(|e| Status::internal(e.to_string()))?;
-        let kafka_producer = &self.kafka_producer;
 
         // Check if email has been registered
         if !diesel::select(diesel::dsl::exists(
@@ -461,23 +533,37 @@ impl AccountService for AccountController {
             .map_err(|e| Status::internal(e.to_string()))?;
 
         // Send to mailer service
-        kafka_producer
-            .send_result(
-                FutureRecord::to("mailer").key(&data_key).payload(
-                    &serde_json::to_string(&[&tools_mailer::contract::MailReq {
-                        to: req.get_ref().email.to_owned(),
-                        subject: format!("Reset Password Verification Code - {verification_code}"),
-                        body: format!(
-                            "Your reset password verification code is {verification_code}"
-                        ),
-                    }])
-                    .map_err(|e| Status::internal(e.to_string()))?,
-                ),
-            )
-            .map_err(|e| Status::internal(e.0.to_string()))?
-            .await
-            .map_err(|e| Status::internal(e.to_string()))?
-            .map_err(|e| Status::internal(e.0.to_string()))?;
+        let mail_payload = serde_json::to_string(&[&tools_mailer::contract::MailReq {
+            to: req.get_ref().email.to_owned(),
+            subject: format!("Reset Password Verification Code - {verification_code}"),
+            body: format!("Your reset password verification code is {verification_code}"),
+        }])
+        .map_err(|e| Status::internal(e.to_string()))?;
+        if let Some(kafka_producer) = &self.kafka_producer {
+            kafka_producer
+                .send_result(
+                    FutureRecord::to("mailer")
+                        .key(&data_key)
+                        .payload(&mail_payload),
+                )
+                .map_err(|e| Status::internal(e.0.to_string()))?
+                .await
+                .map_err(|e| Status::internal(e.to_string()))?
+                .map_err(|e| Status::internal(e.0.to_string()))?;
+        } else if let Some(rabbitmq_channel) = &self.rabbitmq_channel {
+            rabbitmq_channel
+                .basic_publish(
+                    "",
+                    "mailer",
+                    lapin::options::BasicPublishOptions::default(),
+                    mail_payload.as_bytes(),
+                    lapin::BasicProperties::default(),
+                )
+                .await
+                .map_err(|e| Status::internal(e.to_string()))?
+                .await
+                .map_err(|e| Status::internal(e.to_string()))?;
+        }
 
         Ok(Response::new(proto::account::OpRes { is_success: true }))
     }
@@ -519,7 +605,6 @@ impl AccountService for AccountController {
             &mut tools_lib_db::redis::connection::get_connection(&self.app_mode, &self.redis_pool)
                 .map_err(|e| Status::internal(e.to_string()))?;
         let (argon2, salt) = helper::argon2::new(&self.argon2_hash_secret.as_bytes());
-        let kafka_producer = &self.kafka_producer;
 
         // Create data key
         let data_key = format!("reset_password-{}", &req.get_ref().email);
@@ -560,21 +645,37 @@ impl AccountService for AccountController {
         .map_err(|e| Status::internal(e.to_string()))?;
 
         // Send email notification change email
-        kafka_producer
-            .send_result(
-                FutureRecord::to("mailer").key(&data_key).payload(
-                    &serde_json::to_string(&[&tools_mailer::contract::MailReq {
-                        to: req.get_ref().email.to_owned(),
-                        subject: "Reset Password Success".to_string(),
-                        body: "Your account password is now changed".to_string(),
-                    }])
-                    .map_err(|e| Status::internal(e.to_string()))?,
-                ),
-            )
-            .map_err(|e| Status::internal(e.0.to_string()))?
-            .await
-            .map_err(|e| Status::internal(e.to_string()))?
-            .map_err(|e| Status::internal(e.0.to_string()))?;
+        let mail_payload = serde_json::to_string(&[&tools_mailer::contract::MailReq {
+            to: req.get_ref().email.to_owned(),
+            subject: "Reset Password Success".to_string(),
+            body: "Your account password is now changed".to_string(),
+        }])
+        .map_err(|e| Status::internal(e.to_string()))?;
+        if let Some(kafka_producer) = &self.kafka_producer {
+            kafka_producer
+                .send_result(
+                    FutureRecord::to("mailer")
+                        .key(&data_key)
+                        .payload(&mail_payload),
+                )
+                .map_err(|e| Status::internal(e.0.to_string()))?
+                .await
+                .map_err(|e| Status::internal(e.to_string()))?
+                .map_err(|e| Status::internal(e.0.to_string()))?;
+        } else if let Some(rabbitmq_channel) = &self.rabbitmq_channel {
+            rabbitmq_channel
+                .basic_publish(
+                    "",
+                    "mailer",
+                    lapin::options::BasicPublishOptions::default(),
+                    mail_payload.as_bytes(),
+                    lapin::BasicProperties::default(),
+                )
+                .await
+                .map_err(|e| Status::internal(e.to_string()))?
+                .await
+                .map_err(|e| Status::internal(e.to_string()))?;
+        }
 
         Ok(Response::new(proto::account::OpRes { is_success: true }))
     }

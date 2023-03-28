@@ -8,3 +8,5 @@
    sudo docker run --rm -e ALLOW_ANONYMOUS_LOGIN=yes -p 2181:2181 --network=host bitnami/zookeeper:3.8
 1. Run Apache Kafka\
    sudo docker run --rm -e KAFKA_CFG_LOG_CLEANUP_POLICY="compact, delete" -e KAFKA_CFG_ZOOKEEPER_CONNECT=localhost:2181 -e ALLOW_PLAINTEXT_LISTENER=yes -e KAFKA_CFG_AUTO_CREATE_TOPICS_ENABLE=true -p 9092:9092 --network=host bitnami/kafka:3
+1. Run RabbitMQ\
+   sudo docker run --rm -e RABBITMQ_DEFAULT_USER=tools -e RABBITMQ_DEFAULT_PASS=5Vo54BQGxJ29dx -p 5672:5672 --network=host rabbitmq:3

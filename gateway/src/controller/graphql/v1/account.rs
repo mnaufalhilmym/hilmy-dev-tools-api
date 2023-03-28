@@ -11,7 +11,7 @@ use crate::{
         account::{Account, SignInResult},
         op_res::OpRes,
     },
-    dto::token::Token,
+    dto::{service_name::ServiceName, token::Token},
     env::{AppMode, GrpcConnectTimeout},
     service,
 };
@@ -34,7 +34,8 @@ impl AccountQuery {
             .to_owned();
 
         let mut client = AccountServiceClient::new(
-            service::grpc::client::get(db_conn, "account", grpc_connect_timeout).await?,
+            service::grpc::client::get(db_conn, &ServiceName::account(), grpc_connect_timeout)
+                .await?,
         );
 
         let res = client
@@ -68,7 +69,8 @@ impl AccountMutation {
         let grpc_connect_timeout = ctx.data_unchecked::<GrpcConnectTimeout>();
 
         let mut client = AccountServiceClient::new(
-            service::grpc::client::get(db_conn, "account", grpc_connect_timeout).await?,
+            service::grpc::client::get(db_conn, &ServiceName::account(), grpc_connect_timeout)
+                .await?,
         );
 
         let res = client
@@ -93,7 +95,8 @@ impl AccountMutation {
         let grpc_connect_timeout = ctx.data_unchecked::<GrpcConnectTimeout>();
 
         let mut client = AccountServiceClient::new(
-            service::grpc::client::get(db_conn, "account", grpc_connect_timeout).await?,
+            service::grpc::client::get(db_conn, &ServiceName::account(), grpc_connect_timeout)
+                .await?,
         );
 
         let res = client
@@ -121,7 +124,8 @@ impl AccountMutation {
         let grpc_connect_timeout = ctx.data_unchecked::<GrpcConnectTimeout>();
 
         let mut client = AccountServiceClient::new(
-            service::grpc::client::get(db_conn, "account", grpc_connect_timeout).await?,
+            service::grpc::client::get(db_conn, &ServiceName::account(), grpc_connect_timeout)
+                .await?,
         );
 
         let res = client
@@ -146,7 +150,8 @@ impl AccountMutation {
             .to_owned();
 
         let mut client = AccountServiceClient::new(
-            service::grpc::client::get(db_conn, "account", grpc_connect_timeout).await?,
+            service::grpc::client::get(db_conn, &ServiceName::account(), grpc_connect_timeout)
+                .await?,
         );
 
         let res = client
@@ -174,7 +179,8 @@ impl AccountMutation {
         let grpc_connect_timeout = ctx.data_unchecked::<GrpcConnectTimeout>();
 
         let mut client = AccountServiceClient::new(
-            service::grpc::client::get(db_conn, "account", grpc_connect_timeout).await?,
+            service::grpc::client::get(db_conn, &ServiceName::account(), grpc_connect_timeout)
+                .await?,
         );
 
         let res = client
@@ -207,7 +213,8 @@ impl AccountMutation {
             .to_owned();
 
         let mut client = AccountServiceClient::new(
-            service::grpc::client::get(db_conn, "account", grpc_connect_timeout).await?,
+            service::grpc::client::get(db_conn, &ServiceName::account(), grpc_connect_timeout)
+                .await?,
         );
 
         let res = client
@@ -231,7 +238,8 @@ impl AccountMutation {
         let grpc_connect_timeout = ctx.data_unchecked::<GrpcConnectTimeout>();
 
         let mut client = AccountServiceClient::new(
-            service::grpc::client::get(db_conn, "account", grpc_connect_timeout).await?,
+            service::grpc::client::get(db_conn, &ServiceName::account(), grpc_connect_timeout)
+                .await?,
         );
 
         let res = client
@@ -258,7 +266,8 @@ impl AccountMutation {
         let grpc_connect_timeout = ctx.data_unchecked::<GrpcConnectTimeout>();
 
         let mut client = AccountServiceClient::new(
-            service::grpc::client::get(db_conn, "account", grpc_connect_timeout).await?,
+            service::grpc::client::get(db_conn, &ServiceName::account(), grpc_connect_timeout)
+                .await?,
         );
 
         let res = client
@@ -286,7 +295,8 @@ impl AccountMutation {
         let grpc_connect_timeout = ctx.data_unchecked::<GrpcConnectTimeout>();
 
         let mut client = AccountServiceClient::new(
-            service::grpc::client::get(db_conn, "account", grpc_connect_timeout).await?,
+            service::grpc::client::get(db_conn, &ServiceName::account(), grpc_connect_timeout)
+                .await?,
         );
 
         let res = client
@@ -315,7 +325,8 @@ impl AccountMutation {
             .to_owned();
 
         let mut client = AccountServiceClient::new(
-            service::grpc::client::get(db_conn, "account", grpc_connect_timeout).await?,
+            service::grpc::client::get(db_conn, &ServiceName::account(), grpc_connect_timeout)
+                .await?,
         );
 
         let res = client

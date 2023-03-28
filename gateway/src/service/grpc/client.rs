@@ -6,6 +6,7 @@ use tools_lib_db::pg::connection::DbPooled;
 use uuid::Uuid;
 
 use crate::{
+    dto::service_name::ServiceName,
     model::{self, ServiceAddressStatus},
     schema,
 };
@@ -26,11 +27,11 @@ pub async fn connect(
 
 pub async fn get(
     db_conn: &mut DbPooled,
-    service_name: &str,
+    service_name: &ServiceName<'_>,
     grpc_connect_timeout: &u64,
 ) -> Result<Channel, Box<dyn Error + Send + Sync>> {
     let service_addresses = schema::service_address::table
-        .filter(schema::service_info::name.eq(&service_name))
+        .filter(schema::service_info::name.eq(service_name.as_str()))
         .filter(schema::service_address::status.eq(&model::ServiceAddressStatus::Accessible))
         .left_join(
             schema::service_info::table

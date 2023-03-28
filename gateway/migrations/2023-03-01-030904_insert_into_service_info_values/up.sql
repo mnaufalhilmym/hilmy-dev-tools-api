@@ -4,4 +4,4 @@ INSERT INTO
 VALUES
     ('account'),
     ('link'),
-    ('apprepos');
+    ('apprepo');

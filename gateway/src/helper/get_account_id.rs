@@ -4,7 +4,7 @@ use tonic::Request;
 use tools_account::proto::account::AccountServiceClient;
 use tools_lib_db::pg::connection::DbPooled;
 
-use crate::service;
+use crate::{dto::service_name::ServiceName, service};
 
 pub async fn get_account_id(
     db_conn: &mut DbPooled,
@@ -12,7 +12,7 @@ pub async fn get_account_id(
     grpc_connect_timeout: &u64,
 ) -> Result<String, Box<dyn Error + Send + Sync>> {
     let mut client = AccountServiceClient::new(
-        service::grpc::client::get(db_conn, "account", grpc_connect_timeout).await?,
+        service::grpc::client::get(db_conn, &ServiceName::account(), grpc_connect_timeout).await?,
     );
 
     Ok(client

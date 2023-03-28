@@ -1,7 +1,6 @@
 use std::error::Error;
 
 use diesel_migrations::{embed_migrations, EmbeddedMigrations};
-use rdkafka::ClientConfig;
 use tonic::transport::Server;
 
 use crate::controller::AccountController;
@@ -26,8 +25,7 @@ async fn main() -> Result<(), Box<dyn Error + Send + Sync>> {
     let redis_url = env::Env::redis_url();
     let argon2_hash_secret = env::Env::argon2_hash_secret();
     let jwt_secret = env::Env::jwt_secret();
-    let kafka_addrs = env::Env::kafka_addrs();
-    let kafka_msg_timeout = env::Env::kafka_msg_timeout();
+    let use_msg_broker = env::Env::use_msg_broker();
 
     let db_pool = tools_lib_db::pg::connection::create_connection_pool(&database_url);
     let db_conn = &mut tools_lib_db::pg::connection::get_connection(&app_mode, &db_pool).unwrap();
@@ -35,10 +33,45 @@ async fn main() -> Result<(), Box<dyn Error + Send + Sync>> {
 
     let redis_pool = tools_lib_db::redis::connection::create_connection_pool(&redis_url);
 
-    let kafka_producer = ClientConfig::new()
-        .set("bootstrap.servers", &kafka_addrs)
-        .set("message.timeout.ms", &kafka_msg_timeout)
-        .create()?;
+    let mut kafka_producer: Option<rdkafka::producer::FutureProducer> = None;
+    let mut rabbitmq_channel: Option<lapin::Channel> = None;
+    if use_msg_broker.is_kafka() {
+        let kafka_addrs = env::Env::kafka_addrs();
+        let kafka_msg_timeout = env::Env::kafka_msg_timeout();
+        kafka_producer = Some(
+            rdkafka::ClientConfig::new()
+                .set("bootstrap.servers", &kafka_addrs)
+                .set("message.timeout.ms", &kafka_msg_timeout)
+                .create()?,
+        );
+    } else if use_msg_broker.is_rabbitmq() {
+        let rabbitmq_addrs = env::Env::rabbitmq_addrs();
+        let rabbitmq_connection = lapin::Connection::connect(
+            &rabbitmq_addrs,
+            lapin::ConnectionProperties::default()
+                .with_executor(tokio_executor_trait::Tokio::current())
+                .with_reactor(tokio_reactor_trait::Tokio),
+        )
+        .await
+        .unwrap();
+        rabbitmq_channel = Some(rabbitmq_connection.create_channel().await.unwrap());
+        rabbitmq_channel
+            .as_ref()
+            .unwrap()
+            .confirm_select(lapin::options::ConfirmSelectOptions::default())
+            .await
+            .unwrap();
+        rabbitmq_channel
+            .as_ref()
+            .unwrap()
+            .queue_declare(
+                "mailer",
+                lapin::options::QueueDeclareOptions::default(),
+                lapin::types::FieldTable::default(),
+            )
+            .await
+            .unwrap();
+    }
 
     println!("{app_name} {service_name} is running on {service_addrs} in {app_mode}.");
 
@@ -51,6 +84,7 @@ async fn main() -> Result<(), Box<dyn Error + Send + Sync>> {
                 argon2_hash_secret,
                 jwt_secret,
                 kafka_producer,
+                rabbitmq_channel,
             },
         ))
         .serve(service_addrs.parse()?)

@@ -11,7 +11,7 @@ use crate::{
         link::{GetLinkByShortUrlRes, Link, VisitLinkRes},
         op_res::OpRes,
     },
-    dto::token::Token,
+    dto::{service_name::ServiceName, token::Token},
     env::{AppMode, GrpcConnectTimeout},
     helper::get_account_id,
     service,
@@ -37,7 +37,7 @@ impl LinkQuery {
         let account_id = get_account_id(db_conn, token, grpc_connect_timeout).await?;
 
         let mut client = LinkServiceClient::new(
-            service::grpc::client::get(db_conn, "link", grpc_connect_timeout).await?,
+            service::grpc::client::get(db_conn, &ServiceName::link(), grpc_connect_timeout).await?,
         );
 
         let res = client
@@ -77,7 +77,7 @@ impl LinkQuery {
         let account_id = get_account_id(db_conn, token, grpc_connect_timeout).await?;
 
         let mut client = LinkServiceClient::new(
-            service::grpc::client::get(db_conn, "link", grpc_connect_timeout).await?,
+            service::grpc::client::get(db_conn, &ServiceName::link(), grpc_connect_timeout).await?,
         );
 
         let res = client
@@ -110,7 +110,7 @@ impl LinkQuery {
         let grpc_connect_timeout = ctx.data_unchecked::<GrpcConnectTimeout>();
 
         let mut client = LinkServiceClient::new(
-            service::grpc::client::get(db_conn, "link", grpc_connect_timeout).await?,
+            service::grpc::client::get(db_conn, &ServiceName::link(), grpc_connect_timeout).await?,
         );
 
         let res = client
@@ -133,7 +133,7 @@ impl LinkQuery {
         let grpc_connect_timeout = ctx.data_unchecked::<GrpcConnectTimeout>();
 
         let mut client = LinkServiceClient::new(
-            service::grpc::client::get(db_conn, "link", grpc_connect_timeout).await?,
+            service::grpc::client::get(db_conn, &ServiceName::link(), grpc_connect_timeout).await?,
         );
 
         let res = client
@@ -175,7 +175,7 @@ impl LinkMutation {
         let account_id = get_account_id(db_conn, token, grpc_connect_timeout).await?;
 
         let mut client = LinkServiceClient::new(
-            service::grpc::client::get(db_conn, "link", grpc_connect_timeout).await?,
+            service::grpc::client::get(db_conn, &ServiceName::link(), grpc_connect_timeout).await?,
         );
 
         let res = client
@@ -220,7 +220,7 @@ impl LinkMutation {
         let account_id = get_account_id(db_conn, token, grpc_connect_timeout).await?;
 
         let mut client = LinkServiceClient::new(
-            service::grpc::client::get(db_conn, "link", grpc_connect_timeout).await?,
+            service::grpc::client::get(db_conn, &ServiceName::link(), grpc_connect_timeout).await?,
         );
 
         let res = client
@@ -259,7 +259,7 @@ impl LinkMutation {
         let account_id = get_account_id(db_conn, token, grpc_connect_timeout).await?;
 
         let mut client = LinkServiceClient::new(
-            service::grpc::client::get(db_conn, "link", grpc_connect_timeout).await?,
+            service::grpc::client::get(db_conn, &ServiceName::link(), grpc_connect_timeout).await?,
         );
 
         let res = client

@@ -1,4 +1,3 @@
-use rdkafka::producer::FutureProducer;
 use tools_lib_db::{pg::connection::DbPool, redis::connection::RedisPool};
 
 mod account;
@@ -9,5 +8,6 @@ pub struct AccountController {
     pub redis_pool: RedisPool,
     pub argon2_hash_secret: String,
     pub jwt_secret: String,
-    pub kafka_producer: FutureProducer,
+    pub kafka_producer: Option<rdkafka::producer::FutureProducer>,
+    pub rabbitmq_channel: Option<lapin::Channel>,
 }

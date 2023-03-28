@@ -35,11 +35,31 @@ impl Env {
         env::var("JWT_SECRET").unwrap()
     }
 
+    pub fn use_msg_broker() -> UseMsgBroker {
+        UseMsgBroker(env::var("USE_MSG_BROKER").unwrap())
+    }
+
     pub fn kafka_addrs() -> String {
         env::var("KAFKA_ADDRS").unwrap()
     }
 
     pub fn kafka_msg_timeout() -> String {
         env::var("KAFKA_MSG_TIMEOUT").unwrap()
+    }
+
+    pub fn rabbitmq_addrs() -> String {
+        env::var("RABBITMQ_ADDRS").unwrap()
+    }
+}
+
+pub struct UseMsgBroker(String);
+
+impl UseMsgBroker {
+    pub fn is_kafka(&self) -> bool {
+        self.0 == "KAFKA"
+    }
+
+    pub fn is_rabbitmq(&self) -> bool {
+        self.0 == "RABBITMQ"
     }
 }

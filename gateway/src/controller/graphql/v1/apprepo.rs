@@ -8,7 +8,7 @@ use uuid::Uuid;
 
 use crate::{
     contract::graphql::{apprepo::Apprepo, op_res::OpRes},
-    dto::token::Token,
+    dto::{service_name::ServiceName, token::Token},
     env::{AppMode, GrpcConnectTimeout},
     helper, service,
 };
@@ -26,7 +26,8 @@ impl ApprepoQuery {
         let grpc_connect_timeout = ctx.data_unchecked::<GrpcConnectTimeout>();
 
         let mut client = ApprepoServiceClient::new(
-            service::grpc::client::get(db_conn, "apprepo", grpc_connect_timeout).await?,
+            service::grpc::client::get(db_conn, &ServiceName::apprepo(), grpc_connect_timeout)
+                .await?,
         );
 
         let res = client
@@ -77,7 +78,8 @@ impl ApprepoMutation {
         }
 
         let mut client = ApprepoServiceClient::new(
-            service::grpc::client::get(db_conn, "apprepo", grpc_connect_timeout).await?,
+            service::grpc::client::get(db_conn, &ServiceName::apprepo(), grpc_connect_timeout)
+                .await?,
         );
 
         let res = client
@@ -122,7 +124,8 @@ impl ApprepoMutation {
         }
 
         let mut client = ApprepoServiceClient::new(
-            service::grpc::client::get(db_conn, "apprepo", grpc_connect_timeout).await?,
+            service::grpc::client::get(db_conn, &ServiceName::apprepo(), grpc_connect_timeout)
+                .await?,
         );
 
         let res = client
@@ -161,7 +164,8 @@ impl ApprepoMutation {
         }
 
         let mut client = ApprepoServiceClient::new(
-            service::grpc::client::get(db_conn, "apprepo", grpc_connect_timeout).await?,
+            service::grpc::client::get(db_conn, &ServiceName::apprepo(), grpc_connect_timeout)
+                .await?,
         );
 
         let res = client
