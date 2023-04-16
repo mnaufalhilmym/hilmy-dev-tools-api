@@ -40,7 +40,7 @@ impl AccountService for AccountController {
             .first::<model::Account>(db_conn)
             .is_ok()
         {
-            return Err(Status::aborted("The email has been registered."));
+            return Err(Status::aborted("The email has been registered"));
         }
 
         // Hash the password for security
@@ -512,7 +512,7 @@ impl AccountService for AccountController {
         .get_result(db_conn)
         .map_err(|e| Status::internal(e.to_string()))?
         {
-            return Err(Status::aborted("The email has not been registered."));
+            return Err(Status::aborted("The email has not been registered"));
         }
 
         // Create random 6 digit verification code
@@ -587,7 +587,7 @@ impl AccountService for AccountController {
         // Check if verification code match
         if req.get_ref().verify_code != account_reset_password.verify_code {
             return Err(Status::aborted(
-                "Failed to change email because of wrong verification code",
+                "Failed to reset password because of wrong verification code",
             ));
         }
 
@@ -620,7 +620,7 @@ impl AccountService for AccountController {
         // Check if verification code match
         if req.get_ref().verify_code != account_reset_password.verify_code {
             return Err(Status::aborted(
-                "Failed to change email because of wrong verification code",
+                "Failed to reset password because of wrong verification code",
             ));
         }
 
