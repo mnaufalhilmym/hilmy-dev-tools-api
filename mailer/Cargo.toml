@@ -7,7 +7,13 @@ edition = "2021"
 
 [dependencies]
 tokio = { version = "1", features = ["macros", "rt-multi-thread"] }
-lettre = "0.10"
+lettre = { version = "0.10", default-features = false, features = [
+    "rustls-tls",
+    "builder",
+    "hostname",
+    "smtp-transport",
+    "pool",
+] }
 futures = "0.3"
 serde = "1"
 serde_json = "1"

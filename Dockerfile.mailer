@@ -1,5 +1,5 @@
-FROM rust:1.68-slim-bullseye AS base-builder
-RUN apt update && apt install -y pkg-config libssl-dev cmake g++
+FROM rust:1.69-slim-bullseye AS base-builder
+RUN apt update && apt install -y cmake g++
 WORKDIR /app
 COPY ./mailer/Cargo.toml ./mailer/
 RUN cd mailer && mkdir src && touch src/lib.rs
@@ -11,8 +11,7 @@ WORKDIR /app
 COPY . .
 RUN cargo build --release --bin tools-mailer
 
-FROM debian:bullseye-slim AS runner
-RUN apt update && apt install -y ca-certificates
+FROM gcr.io/distroless/cc AS runner
 WORKDIR /app
 COPY --from=builder /app/target/release/tools-mailer .
-CMD ./tools-mailer
+CMD ["./tools-mailer"]
