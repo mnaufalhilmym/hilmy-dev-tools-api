@@ -35,6 +35,10 @@ impl Env {
         env::var("RABBITMQ_ADDRS").unwrap()
     }
 
+    pub fn rabbitmq_consumer_tag() -> String {
+        env::var("RABBITMQ_CONSUMER_TAG").unwrap()
+    }
+
     pub fn smtp_server() -> String {
         env::var("SMTP_SERVER").unwrap()
     }

@@ -43,8 +43,10 @@ async fn main() -> Result<(), Box<dyn Error + Send + Sync>> {
         })
     } else if use_msg_broker.is_rabbitmq() {
         let rabbitmq_addrs = env::Env::rabbitmq_addrs();
+        let rabbitmq_consumer_tag = env::Env::rabbitmq_consumer_tag();
         rabbitmq_consumer_config = Some(rabbitmq_consumer::Config {
             address: rabbitmq_addrs,
+            consumer_tag: rabbitmq_consumer_tag,
             queue: consume,
         })
     }

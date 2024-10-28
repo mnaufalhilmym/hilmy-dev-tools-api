@@ -3,7 +3,7 @@ fn main() {
 
     tonic_build::configure()
         .build_server(true)
-        .compile(&proto_files, &["."])
+        .compile_protos(&proto_files, &["."])
         .unwrap();
 
     println!("cargo:rerun-if-changed={}", proto_files.join(", "));

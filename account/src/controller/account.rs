@@ -743,6 +743,32 @@ impl AccountService for AccountController {
             .execute(db_conn)
             .map_err(|e| Status::internal(e.to_string()))?;
 
+        if let Some(kafka_producer) = &self.kafka_producer {
+            kafka_producer
+                .send_result(
+                    FutureRecord::to("delete.account")
+                        .key(account_id.as_bytes())
+                        .payload(account_id.as_bytes()),
+                )
+                .map_err(|e| Status::internal(e.0.to_string()))?
+                .await
+                .map_err(|e| Status::internal(e.to_string()))?
+                .map_err(|e| Status::internal(e.0.to_string()))?;
+        } else if let Some(rabbitmq_channel) = &self.rabbitmq_channel {
+            rabbitmq_channel
+                .basic_publish(
+                    "",
+                    "delete.account",
+                    lapin::options::BasicPublishOptions::default(),
+                    account_id.as_bytes(),
+                    lapin::BasicProperties::default(),
+                )
+                .await
+                .map_err(|e| Status::internal(e.to_string()))?
+                .await
+                .map_err(|e| Status::internal(e.to_string()))?;
+        }
+
         Ok(Response::new(proto::account::OpRes { is_success: true }))
     }
 

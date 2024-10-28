@@ -7,12 +7,12 @@ edition = "2021"
 
 [dependencies]
 actix-web = "4"
-actix-cors = "0.6"
+actix-cors = "0.7"
 actix-web-httpauth = "0.8"
-async-graphql = { version = "5", features = ["uuid", "chrono"] }
-async-graphql-actix-web = "5"                                                 # If you need to integrate into actix-web
-tonic = "0.8"
-prost = "0.11"
+async-graphql = { version = "7", features = ["uuid", "chrono"] }
+async-graphql-actix-web = "7"                                                 # If you need to integrate into actix-web
+tonic = "0.12"
+prost = "0.13"
 diesel = { version = "2", features = ["postgres", "r2d2", "uuid", "chrono"] }
 diesel_migrations = "2"
 uuid = { version = "1", features = ["v4", "fast-rng", "macro-diagnostics"] }

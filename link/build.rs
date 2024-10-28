@@ -6,7 +6,7 @@ fn main() {
 
     tonic_build::configure()
         .build_server(true)
-        .compile_with_config(prost_config, &proto_files, &["."])
+        .compile_protos_with_config(prost_config, &proto_files, &["."])
         .unwrap();
 
     println!("cargo:rerun-if-changed={}", proto_files.join(", "));

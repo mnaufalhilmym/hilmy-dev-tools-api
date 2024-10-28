@@ -6,20 +6,20 @@ edition = "2021"
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
-tonic = "0.8"
-prost = "0.11"
+tonic = "0.12"
+prost = "0.13"
 tokio = { version = "1", features = ["rt-multi-thread"] }
 diesel = { version = "2", features = ["postgres", "r2d2", "uuid", "chrono"] }
 diesel_migrations = "2"
-argon2 = "0.4"
+argon2 = "0.5"
 uuid = { version = "1", features = ["v4", "fast-rng", "macro-diagnostics"] }
 chrono = "0.4"
 rand = "0.8"
 serde = "1"
 serde_json = "1"
-redis = "0.22"
-jsonwebtoken = "8"
-rdkafka = { version = "0.29", features = ["cmake-build"] }
+redis = "0.27"
+jsonwebtoken = "9"
+rdkafka = { version = "0.36", features = ["cmake-build"] }
 lapin = "2"
 tokio-executor-trait = "2"
 tokio-reactor-trait = "1"
@@ -28,4 +28,4 @@ tools-mailer = { path = "../mailer" }
 tools-lib-db = { path = "../lib/db" }
 
 [build-dependencies]
-tonic-build = "0.8"
+tonic-build = "0.12"
